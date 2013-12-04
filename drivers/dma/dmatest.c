@@ -22,7 +22,7 @@
 #include <linux/slab.h>
 #include <linux/wait.h>
 
-static unsigned int test_buf_size = 16384;
+static unsigned int test_buf_size = 65536;
 module_param(test_buf_size, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(test_buf_size, "Size of the memcpy test buffer");
 
@@ -36,7 +36,7 @@ module_param_string(device, test_device, sizeof(test_device),
 		S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(device, "Bus ID of the DMA Engine to test (default: any)");
 
-static unsigned int threads_per_chan = 1;
+static unsigned int threads_per_chan = 10;
 module_param(threads_per_chan, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(threads_per_chan,
 		"Number of threads to start per channel (default: 1)");
@@ -124,7 +124,7 @@ static const struct kernel_param_ops run_ops = {
 	.set = dmatest_run_set,
 	.get = dmatest_run_get,
 };
-static bool dmatest_run;
+static bool dmatest_run = true;
 module_param_cb(run, &run_ops, &dmatest_run, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(run, "Run the test (default: false)");
 

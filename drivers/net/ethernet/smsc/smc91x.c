@@ -1997,7 +1997,8 @@ static int smc_probe(struct net_device *dev, void __iomem *ioaddr,
 	}
 
 	/* Grab the IRQ */
-	retval = request_irq(dev->irq, smc_interrupt, irq_flags, dev->name, dev);
+	irq_flags |= IRQF_ONESHOT;
+	retval = request_threaded_irq(dev->irq, NULL, smc_interrupt, irq_flags, dev->name, dev);
       	if (retval)
       		goto err_out;
 

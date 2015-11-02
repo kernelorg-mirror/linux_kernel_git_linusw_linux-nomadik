@@ -180,6 +180,20 @@
 				};
 			};
 		};
+		usb {
+			usb_fs_mux: usb_fs_mux {
+				usb_fs_mux {
+					function = "usb";
+					groups = "usbfs_b_1";
+				};
+			};
+			usb_hs_mux: usb_hs_mux {
+				usb_hs_mux {
+					function = "usb";
+					groups = "usbhs_c_1";
+				};
+			};
+		};
 	};
 
 	/* Power Management Unit */
@@ -768,6 +782,19 @@
 			interrupt-controller;
 			#interrupt-cells = <1>;
 			reg = <0x10140020 0x20>;
+		};
+
+		usb@10170000 {
+			compatible = "stericsson,nomadik-musb";
+			reg = <0x10170000 0x10000>;
+			interrupt-parent = <&vica>;
+			interrupts = <23>;
+			interrupt-names = "mc";
+			clocks = <&usbclk>;
+			pinctrl-names = "default", "highspeed";
+			pinctrl-0 = <&usb_fs_mux>;
+			pinctrl-1 = <&usb_hs_mux>;
+			dr_mode = "otg";
 		};
 
 		uart0: uart@101fd000 {

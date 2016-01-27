@@ -1078,6 +1078,24 @@ static void __init l2x0_of_parse(const struct device_node *np,
 		val |= L2C_AUX_CTRL_SHARED_OVERRIDE;
 	}
 
+	/* L210-specific aux control flags */
+	if (of_device_is_compatible(np, "arm,l210-cache")) {
+		if (of_property_read_bool(np, "arm,wrap-access-disable")) {
+			mask &= ~L210_AUX_CTRL_WRAP_DISABLE;
+			val |= L210_AUX_CTRL_WRAP_DISABLE;
+		}
+
+		if (of_property_read_bool(np, "arm,write-allocate-override")) {
+			mask &= ~L210_AUX_CTRL_WA_OVERRIDE;
+			val |= L210_AUX_CTRL_WA_OVERRIDE;
+		}
+
+		if (of_property_read_bool(np, "arm,exclusive-abort-disable")) {
+			mask &= ~L210_AUX_CTRL_EXCLUSIVE_ABORT;
+			val |= L210_AUX_CTRL_EXCLUSIVE_ABORT;
+		}
+	}
+
 	ret = l2x0_cache_size_of_parse(np, aux_val, aux_mask, &assoc, SZ_256K);
 	if (ret)
 		return;

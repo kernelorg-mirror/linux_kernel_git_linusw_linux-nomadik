@@ -161,6 +161,11 @@ properties:
       be specified to indicate that such transforms are precluded.
     type: boolean
 
+  arm,write-allocate-override:
+    description: On L210 only, normally the L210 will use HPROT attributes,
+    setting this bit overrides that behaviour and cause the cache to make all
+    write-through and write-back accesses into read-write-allocate accesses.
+
   arm,parity-enable:
     description: enable parity checking on the L2 cache (L220 or PL310).
     type: boolean

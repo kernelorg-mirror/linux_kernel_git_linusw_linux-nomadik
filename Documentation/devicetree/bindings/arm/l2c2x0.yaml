@@ -168,6 +168,20 @@ properties:
       be specified to indicate that such transforms are precluded.
     type: boolean
 
+  arm,wrap-access-disable:
+    description: On L210 only, if this flag is set, wrap accesses requested
+    on slave ports are converted to linear acesses on master ports.
+
+  arm,write-allocate-override:
+    description: On L210 only, normally the L210 will use HPROT attributes,
+    setting this bit overrides that behaviour and cause the cache to make all
+    write-through and write-back accesses into read-write-allocate accesses.
+
+  arm,exclusive-abort-disable: On L210 only, normally the cache controller sends
+    an ERROR response back to exclusive access in a cacheable, shared memory
+    region with the shared override bit set, but setting this flag disables the
+    abort generation and the access is instead treated as cacheable, non-shared.
+
   arm,parity-enable:
     description: enable parity checking on the L2 cache (L220 or PL310).
     type: boolean

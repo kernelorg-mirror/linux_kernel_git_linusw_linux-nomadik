@@ -74,6 +74,16 @@ Optional properties:
   or "write through no write allocate" (for writes).
   On systems where this may cause DMA buffer corruption, this property must be
   specified to indicate that such transforms are precluded.
+- arm,wrap-access-disable : (L210 only) if this flag is set, wrap accesses
+  requested on slave ports are converted to linear acesses on master ports.
+- arm,write-allocate-override : (L210 only) normally the L210 will use HPROT
+  attributes, setting this bit overrides that behaviour and cause the cache
+  to make all write-through and write-back accesses into read-write-allocate
+  accesses.
+- arm,exclusive-abort-disable : (L210 only) normally the cache controller sends
+  an ERROR response back to exclusive access in a cacheable, shared memory
+  region with the shared override bit set, but setting this flag disables the
+  abort generation and the access is instead treated as cacheable, non-shared.
 - arm,parity-enable : enable parity checking on the L2 cache (L220 or PL310).
 - arm,parity-disable : disable parity checking on the L2 cache (L220 or PL310).
 - arm,outer-sync-disable : disable the outer sync operation on the L2 cache.

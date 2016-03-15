@@ -804,6 +804,8 @@
 			clock-names = "mclk", "apb_pclk";
 			interrupt-parent = <&vica>;
 			interrupts = <22>;
+			dmas = <&dmac1 21 1>;
+			dma-names = "rx";
 			max-frequency = <400000>;
 			bus-width = <4>;
 			cap-mmc-highspeed;

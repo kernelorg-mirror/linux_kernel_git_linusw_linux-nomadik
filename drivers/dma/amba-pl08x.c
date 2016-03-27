@@ -365,19 +365,21 @@ static int pl08x_phy_channel_busy(struct pl08x_phy_chan *ch)
 static void pl08x_write_lli(struct pl08x_driver_data *pl08x,
 		struct pl08x_phy_chan *phychan, const u32 *lli, u32 ccfg)
 {
+/*
 	if (pl08x->vd->pl080s)
-		dev_vdbg(&pl08x->adev->dev,
+		dev_info(&pl08x->adev->dev,
 			"WRITE channel %d: csrc=0x%08x, cdst=0x%08x, "
 			"clli=0x%08x, cctl=0x%08x, cctl2=0x%08x, ccfg=0x%08x\n",
 			phychan->id, lli[PL080_LLI_SRC], lli[PL080_LLI_DST],
 			lli[PL080_LLI_LLI], lli[PL080_LLI_CCTL],
 			lli[PL080S_LLI_CCTL2], ccfg);
 	else
-		dev_vdbg(&pl08x->adev->dev,
+		dev_info(&pl08x->adev->dev,
 			"WRITE channel %d: csrc=0x%08x, cdst=0x%08x, "
 			"clli=0x%08x, cctl=0x%08x, ccfg=0x%08x\n",
 			phychan->id, lli[PL080_LLI_SRC], lli[PL080_LLI_DST],
 			lli[PL080_LLI_LLI], lli[PL080_LLI_CCTL], ccfg);
+*/
 
 	writel_relaxed(lli[PL080_LLI_SRC], phychan->base + PL080_CH_SRC_ADDR);
 	writel_relaxed(lli[PL080_LLI_DST], phychan->base + PL080_CH_DST_ADDR);
@@ -886,7 +888,8 @@ static inline void prep_byte_width_lli(struct pl08x_driver_data *pl08x,
 	(*total_bytes) += len;
 }
 
-#ifdef VERBOSE_DEBUG
+//#ifdef VERBOSE_DEBUG
+#if 0
 static void pl08x_dump_lli(struct pl08x_driver_data *pl08x,
 			   const u32 *llis_va, int num_llis)
 {
@@ -906,11 +909,11 @@ static void pl08x_dump_lli(struct pl08x_driver_data *pl08x,
 			llis_va += pl08x->lli_words;
 		}
 	} else {
-		dev_vdbg(&pl08x->adev->dev,
+		dev_info(&pl08x->adev->dev,
 			"%-3s %-9s  %-10s %-10s %-10s %s\n",
 			"lli", "", "csrc", "cdst", "clli", "cctl");
 		for (i = 0; i < num_llis; i++) {
-			dev_vdbg(&pl08x->adev->dev,
+			dev_info(&pl08x->adev->dev,
 				"%3d @%p: 0x%08x 0x%08x 0x%08x 0x%08x\n",
 				i, llis_va, llis_va[PL080_LLI_SRC],
 				llis_va[PL080_LLI_DST], llis_va[PL080_LLI_LLI],
@@ -1073,9 +1076,11 @@ static int pl08x_fill_llis_for_desc(struct pl08x_driver_data *pl08x,
 			 */
 			max_bytes_per_lli = bd.srcbus.buswidth *
 						pl08x->vd->max_transfer_size;
-			dev_vdbg(&pl08x->adev->dev,
+/*
+			dev_info(&pl08x->adev->dev,
 				"%s max bytes per lli = %zu\n",
 				__func__, max_bytes_per_lli);
+*/
 
 			/*
 			 * Make largest possible LLIs until less than one bus
@@ -1116,7 +1121,7 @@ static int pl08x_fill_llis_for_desc(struct pl08x_driver_data *pl08x,
 			 * Send any odd bytes
 			 */
 			if (bd.remainder) {
-				dev_vdbg(&pl08x->adev->dev,
+				dev_info(&pl08x->adev->dev,
 					"%s align with boundary, send odd bytes (remain %zu)\n",
 					__func__, bd.remainder);
 				prep_byte_width_lli(pl08x, &bd, &cctl,
@@ -1814,6 +1819,7 @@ static irqreturn_t pl08x_irq(int irq, void *dev)
 	struct pl08x_driver_data *pl08x = dev;
 	u32 mask = 0, err, tc, i;
 
+	// pr_info("pl08x IRQ\n");
 	/* check & clear - ERR & TC interrupts */
 	err = readl(pl08x->base + PL080_ERR_STATUS);
 	if (err) {
@@ -1989,10 +1995,14 @@ static int pl08x_debugfs_show(struct seq_file *s, void *data)
 		spin_lock_irqsave(&ch->lock, flags);
 		virt_chan = ch->serving;
 
-		seq_printf(s, "%d\t\t%s%s\n",
+		seq_printf(s, "%d\t\t%s%s ",
 			   ch->id,
 			   virt_chan ? virt_chan->name : "(none)",
 			   ch->locked ? " LOCKED" : "");
+		seq_printf(s, "cctl=%08x ", readl(ch->base + PL080_CH_CONTROL));
+		seq_printf(s, "ccfg=%08x ", readl(ch->reg_config));
+		seq_printf(s, "%08x bytes outstanding\n",
+			   get_bytes_in_cctl(readl(ch->base + PL080_CH_CONTROL)));
 
 		spin_unlock_irqrestore(&ch->lock, flags);
 	}
@@ -2012,6 +2022,16 @@ static int pl08x_debugfs_show(struct seq_file *s, void *data)
 		seq_printf(s, "%s\t\t%s\n", chan->name,
 			   pl08x_state_str(chan->state));
 	}
+
+	seq_printf(s, "\nPL08x incoming request signals:\n");
+	seq_printf(s, "PL080_SOFT_BREQ: %08x\n",
+		readl(pl08x->base + PL080_SOFT_BREQ));
+	seq_printf(s, "PL080_SOFT_SREQ: %08x\n",
+		readl(pl08x->base + PL080_SOFT_SREQ));
+	seq_printf(s, "PL080_SOFT_LBREQ: %08x\n",
+		readl(pl08x->base + PL080_SOFT_LBREQ));
+	seq_printf(s, "PL080_SOFT_LSREQ: %08x\n",
+		readl(pl08x->base + PL080_SOFT_LSREQ));
 
 	return 0;
 }

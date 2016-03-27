@@ -77,6 +77,7 @@ static unsigned int fmax = 515633;
  * @qcom_fifo: enables qcom specific fifo pio read logic.
  * @qcom_dml: enables qcom specific dma glue for dma transfers.
  * @reversed_irq_handling: handle data irq before cmd irq.
+ * @dma_handshake: synchronize end of transfer with DMAengine callback
  */
 struct variant_data {
 	unsigned int		clkreg;
@@ -103,6 +104,7 @@ struct variant_data {
 	bool			qcom_fifo;
 	bool			qcom_dml;
 	bool			reversed_irq_handling;
+	bool			dma_handshake;
 };
 
 static struct variant_data variant_arm = {
@@ -160,6 +162,7 @@ static struct variant_data variant_nomadik = {
 	.signal_direction	= true,
 	.pwrreg_clkgate		= true,
 	.pwrreg_nopower		= true,
+	.dma_handshake		= true,
 };
 
 static struct variant_data variant_ux500 = {
@@ -219,6 +222,26 @@ static struct variant_data variant_qcom = {
 	.qcom_fifo		= true,
 	.qcom_dml		= true,
 };
+
+static void mmci_dump_sg(struct mmc_data *data)
+{
+
+	unsigned int flags = SG_MITER_ATOMIC | SG_MITER_FROM_SG;
+	struct sg_mapping_iter miter;
+
+	sg_miter_start(&miter, data->sg, data->sg_len, flags);
+	do {
+		if (miter.length > 0) {
+			pr_info("addr: %p, length: %08x\n",
+				miter.addr,
+				miter.length);
+			print_hex_dump(KERN_INFO, "data: ",
+				DUMP_PREFIX_OFFSET, 16, 1,
+				miter.addr, miter.length, true);
+		}
+	} while (sg_miter_next(&miter));
+	sg_miter_stop(&miter);
+}
 
 static int mmci_card_busy(struct mmc_host *mmc)
 {
@@ -494,6 +517,8 @@ static void mmci_dma_data_error(struct mmci_host *host)
 	dmaengine_terminate_all(host->dma_current);
 	host->dma_current = NULL;
 	host->dma_desc_current = NULL;
+	host->got_dma_callback = false;
+	host->got_dma_dataend_irq = false;
 	host->data->host_cookie = 0;
 }
 
@@ -513,18 +538,22 @@ static void mmci_dma_unmap(struct mmci_host *host, struct mmc_data *data)
 	dma_unmap_sg(chan->device->dev, data->sg, data->sg_len, dir);
 }
 
-static void mmci_dma_finalize(struct mmci_host *host, struct mmc_data *data)
+static void mmci_dma_finalize(struct mmci_host *host)
 {
+	struct mmc_data *data = host->data;
 	u32 status;
 	int i;
 
-	/* Wait up to 1ms for the DMA to complete */
+	/* Wait up to 100ms for the DMA to complete */
 	for (i = 0; ; i++) {
 		status = readl(host->base + MMCISTATUS);
-		if (!(status & MCI_RXDATAAVLBLMASK) || i >= 100)
+		if (!(status & MCI_RXDATAAVLBLMASK) || i >= 10000)
 			break;
 		udelay(10);
 	}
+
+	/* Nomadik */
+	// status &= ~MCI_RXDATAAVLBLMASK;
 
 	/*
 	 * Check to see whether we still have some data left in the FIFO -
@@ -545,13 +574,44 @@ static void mmci_dma_finalize(struct mmci_host *host, struct mmc_data *data)
 	 * Use of DMA with scatter-gather is impossible.
 	 * Give up with DMA and switch back to PIO mode.
 	 */
+	/*
 	if (status & MCI_RXDATAAVLBLMASK) {
 		dev_err(mmc_dev(host->mmc), "buggy DMA detected. Taking evasive action.\n");
 		mmci_dma_release(host);
 	}
+	*/
 
 	host->dma_current = NULL;
 	host->dma_desc_current = NULL;
+	host->got_dma_callback = false;
+	host->got_dma_dataend_irq = false;
+}
+
+/* called after completed DMA job */
+static void mmci_dma_callback(void *data)
+{
+	struct mmci_host *host = data;
+	unsigned long flags;
+
+	pr_info("DMA callback\n");
+
+	spin_lock_irqsave(&host->lock, flags);
+	host->got_dma_callback = true;
+	if (host->got_dma_dataend_irq)
+		mmci_dma_finalize(host);
+	spin_unlock_irqrestore(&host->lock, flags);
+}
+
+static void mmci_dma_dataend_irq(struct mmci_host *host)
+{
+	unsigned long flags;
+	pr_info("DMA dataend IRQ callback\n");
+
+	spin_lock_irqsave(&host->lock, flags);
+	host->got_dma_dataend_irq = true;
+	if (host->got_dma_callback)
+		mmci_dma_finalize(host);
+	spin_unlock_irqrestore(&host->lock, flags);
 }
 
 /* prepares DMA channel and DMA descriptor, returns non-zero on failure */
@@ -574,7 +634,7 @@ static int __mmci_dma_prep_data(struct mmci_host *host, struct mmc_data *data,
 	struct dma_async_tx_descriptor *desc;
 	enum dma_data_direction buffer_dirn;
 	int nr_sg;
-	unsigned long flags = DMA_CTRL_ACK;
+	unsigned long flags = DMA_CTRL_ACK | DMA_PREP_INTERRUPT;
 
 	if (data->flags & MMC_DATA_READ) {
 		conf.direction = DMA_DEV_TO_MEM;
@@ -604,9 +664,12 @@ static int __mmci_dma_prep_data(struct mmci_host *host, struct mmc_data *data,
 
 	dmaengine_slave_config(chan, &conf);
 	desc = dmaengine_prep_slave_sg(chan, data->sg, nr_sg,
-					    conf.direction, flags);
+				conf.direction, flags);
 	if (!desc)
 		goto unmap_exit;
+
+	desc->callback = mmci_dma_callback;
+	desc->callback_param = host;
 
 	*dma_chan = chan;
 	*dma_desc = desc;
@@ -650,6 +713,8 @@ static int mmci_dma_start_data(struct mmci_host *host, unsigned int datactrl)
 	dev_vdbg(mmc_dev(host->mmc),
 		 "Submit MMCI DMA job, sglen %d blksz %04x blks %04x flags %08x\n",
 		 data->sg_len, data->blksz, data->blocks, data->flags);
+	host->got_dma_callback = false;
+	host->got_dma_dataend_irq = false;
 	dmaengine_submit(host->dma_desc_current);
 	dma_async_issue_pending(host->dma_current);
 
@@ -680,6 +745,8 @@ static void mmci_get_next_data(struct mmci_host *host, struct mmc_data *data)
 
 	host->dma_desc_current = next->dma_desc;
 	host->dma_current = next->dma_chan;
+	host->got_dma_callback = false;
+	host->got_dma_dataend_irq = false;
 	next->dma_desc = NULL;
 	next->dma_chan = NULL;
 }
@@ -953,12 +1020,14 @@ mmci_data_irq(struct mmci_host *host, struct mmc_data *data,
 
 	if (status & MCI_DATAEND || data->error) {
 		if (dma_inprogress(host))
-			mmci_dma_finalize(host, data);
+			mmci_dma_dataend_irq(host);
 		mmci_stop_data(host);
 
-		if (!data->error)
+		if (!data->error) {
 			/* The error clause is handled above, success! */
 			data->bytes_xfered = data->blksz * data->blocks;
+			// mmci_dump_sg(data);
+		}
 
 		if (!data->stop || host->mrq->sbc) {
 			mmci_request_end(host, data->mrq);

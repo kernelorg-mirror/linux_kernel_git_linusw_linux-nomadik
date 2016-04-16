@@ -964,6 +964,137 @@ mmci_start_command(struct mmci_host *host, struct mmc_command *cmd, u32 c)
 	writel(c, base + MMCICOMMAND);
 }
 
+static int mmci_pio_read(struct mmci_host *host, char *buffer, unsigned int remain)
+{
+	void __iomem *base = host->base;
+	char *ptr = buffer;
+	u32 status = readl(host->base + MMCISTATUS);
+	int host_remain = host->size;
+
+	do {
+		int count = host->get_rx_fifocnt(host, status, host_remain);
+
+		if (count > remain)
+			count = remain;
+
+		if (count <= 0)
+			break;
+
+		/*
+		 * SDIO especially may want to send something that is
+		 * not divisible by 4 (as opposed to card sectors
+		 * etc). Therefore make sure to always read the last bytes
+		 * while only doing full 32-bit reads towards the FIFO.
+		 */
+		if (unlikely(count & 0x3)) {
+			if (count < 4) {
+				unsigned char buf[4];
+				ioread32_rep(base + MMCIFIFO, buf, 1);
+				memcpy(ptr, buf, count);
+			} else {
+				ioread32_rep(base + MMCIFIFO, ptr, count >> 2);
+				count &= ~0x3;
+			}
+		} else {
+			ioread32_rep(base + MMCIFIFO, ptr, count >> 2);
+		}
+
+		ptr += count;
+		remain -= count;
+		host_remain -= count;
+
+		if (remain == 0)
+			break;
+
+		status = readl(base + MMCISTATUS);
+	} while (status & MCI_RXDATAAVLBL);
+
+	return ptr - buffer;
+}
+
+static int mmci_pio_write(struct mmci_host *host, char *buffer, unsigned int remain, u32 status)
+{
+	struct variant_data *variant = host->variant;
+	void __iomem *base = host->base;
+	char *ptr = buffer;
+
+	do {
+		unsigned int count, maxcnt;
+
+		maxcnt = status & MCI_TXFIFOEMPTY ?
+			 variant->fifosize : variant->fifohalfsize;
+		count = min(remain, maxcnt);
+
+		/*
+		 * SDIO especially may want to send something that is
+		 * not divisible by 4 (as opposed to card sectors
+		 * etc), and the FIFO only accept full 32-bit writes.
+		 * So compensate by adding +3 on the count, a single
+		 * byte become a 32bit write, 7 bytes will be two
+		 * 32bit writes etc.
+		 */
+		iowrite32_rep(base + MMCIFIFO, ptr, (count + 3) >> 2);
+
+		ptr += count;
+		remain -= count;
+
+		if (remain == 0)
+			break;
+
+		status = readl(base + MMCISTATUS);
+	} while (status & MCI_TXFIFOHALFEMPTY);
+
+	return ptr - buffer;
+}
+
+static void mmci_pio_poll(struct mmci_host *host)
+{
+	void __iomem *base = host->base;
+	struct sg_mapping_iter *sg_miter = &host->sg_miter;
+	u32 status;
+
+	status = readl(base + MMCISTATUS);
+
+	do {
+		unsigned int remain, len;
+		char *buffer;
+
+		/*
+		 * For write, we only need to test the half-empty flag
+		 * here - if the FIFO is completely empty, then by
+		 * definition it is more than half empty.
+		 *
+		 * For read, check for data available.
+		 */
+		if (!(status & (MCI_TXFIFOHALFEMPTY|MCI_RXDATAAVLBL)))
+			break;
+
+		if (!sg_miter_next(sg_miter))
+			break;
+
+		buffer = sg_miter->addr;
+		remain = sg_miter->length;
+
+		len = 0;
+		if (status & MCI_RXACTIVE)
+			len = mmci_pio_read(host, buffer, remain);
+		if (status & MCI_TXACTIVE)
+			len = mmci_pio_write(host, buffer, remain, status);
+
+		sg_miter->consumed = len;
+
+		host->size -= len;
+		remain -= len;
+
+		if (remain)
+			break;
+
+		status = readl(base + MMCISTATUS);
+	} while (1);
+
+	sg_miter_stop(sg_miter);
+}
+
 static void
 mmci_data_irq(struct mmci_host *host, struct mmc_data *data,
 	      unsigned int status)
@@ -1161,152 +1292,29 @@ static int mmci_qcom_get_rx_fifocnt(struct mmci_host *host, u32 status, int r)
 	return 0;
 }
 
-static int mmci_pio_read(struct mmci_host *host, char *buffer, unsigned int remain)
-{
-	void __iomem *base = host->base;
-	char *ptr = buffer;
-	u32 status = readl(host->base + MMCISTATUS);
-	int host_remain = host->size;
-
-	do {
-		int count = host->get_rx_fifocnt(host, status, host_remain);
-
-		if (count > remain)
-			count = remain;
-
-		if (count <= 0)
-			break;
-
-		/*
-		 * SDIO especially may want to send something that is
-		 * not divisible by 4 (as opposed to card sectors
-		 * etc). Therefore make sure to always read the last bytes
-		 * while only doing full 32-bit reads towards the FIFO.
-		 */
-		if (unlikely(count & 0x3)) {
-			if (count < 4) {
-				unsigned char buf[4];
-				ioread32_rep(base + MMCIFIFO, buf, 1);
-				memcpy(ptr, buf, count);
-			} else {
-				ioread32_rep(base + MMCIFIFO, ptr, count >> 2);
-				count &= ~0x3;
-			}
-		} else {
-			ioread32_rep(base + MMCIFIFO, ptr, count >> 2);
-		}
-
-		ptr += count;
-		remain -= count;
-		host_remain -= count;
-
-		if (remain == 0)
-			break;
-
-		status = readl(base + MMCISTATUS);
-	} while (status & MCI_RXDATAAVLBL);
-
-	return ptr - buffer;
-}
-
-static int mmci_pio_write(struct mmci_host *host, char *buffer, unsigned int remain, u32 status)
-{
-	struct variant_data *variant = host->variant;
-	void __iomem *base = host->base;
-	char *ptr = buffer;
-
-	do {
-		unsigned int count, maxcnt;
-
-		maxcnt = status & MCI_TXFIFOEMPTY ?
-			 variant->fifosize : variant->fifohalfsize;
-		count = min(remain, maxcnt);
-
-		/*
-		 * SDIO especially may want to send something that is
-		 * not divisible by 4 (as opposed to card sectors
-		 * etc), and the FIFO only accept full 32-bit writes.
-		 * So compensate by adding +3 on the count, a single
-		 * byte become a 32bit write, 7 bytes will be two
-		 * 32bit writes etc.
-		 */
-		iowrite32_rep(base + MMCIFIFO, ptr, (count + 3) >> 2);
-
-		ptr += count;
-		remain -= count;
-
-		if (remain == 0)
-			break;
-
-		status = readl(base + MMCISTATUS);
-	} while (status & MCI_TXFIFOHALFEMPTY);
-
-	return ptr - buffer;
-}
-
 /*
  * PIO data transfer IRQ handler.
  */
 static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
 {
 	struct mmci_host *host = dev_id;
-	struct sg_mapping_iter *sg_miter = &host->sg_miter;
 	struct variant_data *variant = host->variant;
-	void __iomem *base = host->base;
 	unsigned long flags;
+	void __iomem *base = host->base;
 	u32 status;
 
-	status = readl(base + MMCISTATUS);
+	dev_dbg(mmc_dev(host->mmc), "irq1 (pio)\n");
 
-	dev_dbg(mmc_dev(host->mmc), "irq1 (pio) %08x\n", status);
-
+	/* Poll out the data */
 	local_irq_save(flags);
-
-	do {
-		unsigned int remain, len;
-		char *buffer;
-
-		/*
-		 * For write, we only need to test the half-empty flag
-		 * here - if the FIFO is completely empty, then by
-		 * definition it is more than half empty.
-		 *
-		 * For read, check for data available.
-		 */
-		if (!(status & (MCI_TXFIFOHALFEMPTY|MCI_RXDATAAVLBL)))
-			break;
-
-		if (!sg_miter_next(sg_miter))
-			break;
-
-		buffer = sg_miter->addr;
-		remain = sg_miter->length;
-
-		len = 0;
-		if (status & MCI_RXACTIVE)
-			len = mmci_pio_read(host, buffer, remain);
-		if (status & MCI_TXACTIVE)
-			len = mmci_pio_write(host, buffer, remain, status);
-
-		sg_miter->consumed = len;
-
-		host->size -= len;
-		remain -= len;
-
-		if (remain)
-			break;
-
-		status = readl(base + MMCISTATUS);
-	} while (1);
-
-	sg_miter_stop(sg_miter);
-
+	mmci_pio_poll(host);
 	local_irq_restore(flags);
 
 	/*
 	 * If we have less than the fifo 'half-full' threshold to transfer,
 	 * trigger a PIO interrupt as soon as any data is available.
 	 */
+	status = readl(base + MMCISTATUS);
 	if (status & MCI_RXACTIVE && host->size < variant->fifohalfsize)
 		mmci_set_mask1(host, MCI_RXDATAAVLBLMASK);
 

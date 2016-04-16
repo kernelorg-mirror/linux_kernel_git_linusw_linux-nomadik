@@ -86,6 +86,7 @@ static unsigned int fmax = 515633;
  * @start_err: bitmask identifying the STARTBITERR bit inside MMCISTATUS
  *	       register.
  * @opendrain: bitmask identifying the OPENDRAIN bit inside MMCIPOWER register
+ * @polling_mode: the device is put into polling mode
  */
 struct variant_data {
 	unsigned int		clkreg;
@@ -118,6 +119,7 @@ struct variant_data {
 	bool			mmcimask1;
 	u32			start_err;
 	u32			opendrain;
+	bool			polling_mode;
 };
 
 static struct variant_data variant_arm = {
@@ -190,6 +192,7 @@ static struct variant_data variant_nomadik = {
 	.mmcimask1		= true,
 	.start_err		= MCI_STARTBITERR,
 	.opendrain		= MCI_OD,
+	.polling_mode		= true,
 };
 
 static struct variant_data variant_ux500 = {
@@ -904,11 +907,15 @@ static void mmci_start_data(struct mmci_host *host, struct mmc_data *data)
 	 * Attempt to use DMA operation mode, if this
 	 * should fail, fall back to PIO mode
 	 */
-	if (!mmci_dma_start_data(host, datactrl))
+	if (!variant->polling_mode && !mmci_dma_start_data(host, datactrl))
 		return;
 
-	/* IRQ mode, map the SG list for CPU reading/writing */
+	/* IRQ or polling mode, map the SG list for CPU reading/writing */
 	mmci_init_sg(host, data);
+
+	/* We will poll for completion, do not turn on interrupts */
+	if (variant->polling_mode)
+		return;
 
 	if (data->flags & MMC_DATA_READ) {
 		irqmask = MCI_RXFIFOHALFFULLMASK;
@@ -1270,6 +1277,8 @@ mmci_cmd_irq(struct mmci_host *host, struct mmc_command *cmd,
 		mmci_start_command(host, host->mrq->cmd, 0);
 	} else if (!(cmd->data->flags & MMC_DATA_READ)) {
 		mmci_start_data(host, cmd->data);
+		if (host->variant->polling_mode)
+			mmci_pio_poll(host);
 	}
 }
 
@@ -1414,8 +1423,11 @@ static void mmci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	if (mrq->data)
 		mmci_get_next_data(host, mrq->data);
 
-	if (mrq->data && mrq->data->flags & MMC_DATA_READ)
+	if (mrq->data && mrq->data->flags & MMC_DATA_READ) {
 		mmci_start_data(host, mrq->data);
+		if (host->variant->polling_mode)
+			mmci_pio_poll(host);
+	}
 
 	if (mrq->sbc)
 		mmci_start_command(host, mrq->sbc, 0);

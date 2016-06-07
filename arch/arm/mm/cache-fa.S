@@ -21,7 +21,8 @@
 /*
  * The size of one data cache line.
  */
-#define CACHE_DLINESIZE	16
+#define CACHE_DLINESIZE		16
+#define CACHE_DLINESHIFT	4
 
 /*
  * The total size of the data cache.
@@ -166,7 +167,17 @@ ENTRY(fa_flush_kern_dcache_area)
  *	- start  - virtual start address
  *	- end	 - virtual end address
  */
+__flush_whole_dcache:
+	mcr	p15, 0, r0, c7, c14, 0		@ clean/invalidate D cache
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer
+	mov	pc, lr
+
 fa_dma_inv_range:
+	sub	r3, r1, r0			@ calculate total size
+	cmp	r3, #CACHE_DLIMIT		@ total size >= limit?
+	bhs	__flush_whole_dcache		@ flush whole D cache
+
 	tst	r0, #CACHE_DLINESIZE - 1
 	bic	r0, r0, #CACHE_DLINESIZE - 1
 	mcrne	p15, 0, r0, c7, c14, 1		@ clean & invalidate D entry
@@ -190,6 +201,10 @@ fa_dma_inv_range:
  *	- end	 - virtual end address
  */
 fa_dma_clean_range:
+	sub	r3, r1, r0			@ calculate total size
+	cmp	r3, #CACHE_DLIMIT		@ total size >= limit?
+	bhs	__flush_whole_dcache		@ flush whole D cache
+
 	bic	r0, r0, #CACHE_DLINESIZE - 1
 1:	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
 	add	r0, r0, #CACHE_DLINESIZE

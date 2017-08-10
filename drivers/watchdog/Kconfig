@@ -463,6 +463,7 @@ config 977_WATCHDOG
 config FTWDT010_WATCHDOG
 	tristate "Faraday Technology FTWDT010 watchdog"
 	depends on ARM || COMPILE_TEST
+	depends on COMMON_CLK
 	select WATCHDOG_CORE
 	default ARCH_GEMINI
 	help

@@ -1,17 +1,27 @@
 Faraday Technology FTWDT010 watchdog
 
 This is an IP part from Faraday Technology found in the Gemini
-SoCs and others.
+and MOXA ART SoCs and others.
 
 Required properties:
 - compatible : must be one of
   "faraday,ftwdt010"
   "cortina,gemini-watchdog", "faraday,ftwdt010"
+  "moxa,moxart-watchdog", "faraday,ftwdt010"
+  "aspeed,ast2400-wdt", "faraday,ftwdt010"
+  "aspeed,ast2500-wdt", "faraday,ftwdt010"
 - reg : shall contain base register location and length
-- interrupts : shall contain the interrupt for the watchdog
+- clocks : the clock driving the IP block (PCLK) and optionally
+  an external clock (EXTCLK)
+- clock-names : should be "PCLK" for the IP block clock and
+  "EXTCLK" for the external clock if present
 
 Optional properties:
+- interrupts : the bark interrupt for the watchdog
+- resets : reset line for the IP block
 - timeout-sec : the default watchdog timeout in seconds.
+- faraday,use-extclk : if set, the "EXTCLK" provided in the clocks
+  property will be used to clock the watchdog
 
 Example:
 
@@ -19,4 +29,6 @@ watchdog@41000000 {
 	compatible = "faraday,ftwdt010";
 	reg = <0x41000000 0x1000>;
 	interrupts = <3 IRQ_TYPE_LEVEL_HIGH>;
+	clocks = <&pclk>;
+	clock-names = "PCLK";
 };

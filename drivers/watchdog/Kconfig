@@ -465,11 +465,11 @@ config FTWDT010_WATCHDOG
 	depends on ARM || COMPILE_TEST
 	depends on COMMON_CLK
 	select WATCHDOG_CORE
-	default (ARCH_GEMINI || ARCH_MOXART)
+	default (ARCH_GEMINI || ARCH_MOXART || ARCH_ASPEED)
 	help
 	  Say Y here if to include support for the Faraday Technology
-	  FTWDT010 watchdog timer embedded in the Cortina Systems Gemini
-	  family of devices.
+	  FTWDT010 watchdog timer embedded in the Cortina Systems Gemini,
+	  MOXA ART and Aspeed families of devices.
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called ftwdt010_wdt.
@@ -914,19 +914,6 @@ config RENESAS_RZAWDT
 	help
 	  This driver adds watchdog support for the integrated watchdogs in the
 	  Renesas RZ/A SoCs. These watchdogs can be used to reset a system.
-
-config ASPEED_WATCHDOG
-	tristate "Aspeed BMC watchdog support"
-	depends on ARCH_ASPEED || COMPILE_TEST
-	select WATCHDOG_CORE
-	help
-	  Say Y here to include support for the watchdog timer
-	  in Aspeed BMC SoCs.
-
-	  This driver is required to reboot the SoC.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called aspeed_wdt.
 
 config ZX2967_WATCHDOG
 	tristate "ZTE zx2967 SoCs watchdog support"

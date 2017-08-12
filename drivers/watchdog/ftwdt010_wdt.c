@@ -9,6 +9,9 @@
  *
  * Inspired by the MOXA ART driver from Jonas Jensen:
  * Copyright (C) 2013 Jonas Jensen <jonas.jensen@gmail.com>
+ *
+ * Inspired by the Aspeed driver from Joel Stanley <joel@jms.id.au>:
+ * Copyright 2016 IBM Corporation
  */
 
 #include <linux/bitops.h>
@@ -30,7 +33,9 @@
 #define FTWDT010_WDCR		0xC
 
 #define WDRESTART_MAGIC		0x5AB9
+#define ASPEED_MAGIC		0x4755
 
+#define ASPEED_RESET_FULL_CHIP	BIT(5)
 #define WDCR_EXTCLK		BIT(4)
 #define WDCR_WDEXT		BIT(3)
 #define WDCR_WDINTR		BIT(2)
@@ -46,6 +51,7 @@ struct ftwdt010_wdt {
 	struct clk		*extclk;
 	unsigned int		clk_freq;
 	bool			use_extclk;
+	u32			magic;
 };
 
 static inline
@@ -61,7 +67,7 @@ static int ftwdt010_wdt_restart(struct watchdog_device *wdd,
 	u32 enable;
 
 	writel(1, gwdt->base + FTWDT010_WDLOAD);
-	writel(WDRESTART_MAGIC, gwdt->base + FTWDT010_WDRESTART);
+	writel(gwdt->magic, gwdt->base + FTWDT010_WDRESTART);
 	enable = WDCR_SYS_RST | WDCR_ENABLE;
 	if (gwdt->use_extclk)
 		enable |= WDCR_EXTCLK;
@@ -76,7 +82,7 @@ static int ftwdt010_wdt_start(struct watchdog_device *wdd)
 	u32 enable;
 
 	writel(wdd->timeout * gwdt->clk_freq, gwdt->base + FTWDT010_WDLOAD);
-	writel(WDRESTART_MAGIC, gwdt->base + FTWDT010_WDRESTART);
+	writel(gwdt->magic, gwdt->base + FTWDT010_WDRESTART);
 	/* set clock before enabling */
 	enable = WDCR_SYS_RST;
 	if (gwdt->use_extclk)
@@ -103,7 +109,7 @@ static int ftwdt010_wdt_ping(struct watchdog_device *wdd)
 {
 	struct ftwdt010_wdt *gwdt = to_ftwdt010_wdt(wdd);
 
-	writel(WDRESTART_MAGIC, gwdt->base + FTWDT010_WDRESTART);
+	writel(gwdt->magic, gwdt->base + FTWDT010_WDRESTART);
 
 	return 0;
 }
@@ -150,6 +156,7 @@ static int ftwdt010_wdt_probe(struct platform_device *pdev)
 	struct device_node *np = dev->of_node;
 	struct ftwdt010_wdt *gwdt;
 	unsigned int reg;
+	bool is_aspeed;
 	int irq;
 	int ret;
 
@@ -162,6 +169,10 @@ static int ftwdt010_wdt_probe(struct platform_device *pdev)
 		return PTR_ERR(gwdt->base);
 
 	gwdt->use_extclk = of_property_read_bool(np, "faraday,use-extclk");
+
+	/* We want to know if we are aspeed */
+	is_aspeed = of_device_is_compatible(np, "aspeed,ast2400-wdt") ||
+		of_device_is_compatible(np, "aspeed,ast2500-wdt");
 
 	gwdt->pclk = devm_clk_get(dev, "PCLK");
 	if (IS_ERR(gwdt->pclk))
@@ -196,6 +207,10 @@ static int ftwdt010_wdt_probe(struct platform_device *pdev)
 	gwdt->wdd.min_timeout = 1;
 	gwdt->wdd.max_timeout = UINT_MAX / gwdt->clk_freq;
 	gwdt->wdd.parent = dev;
+	if (is_aspeed)
+		gwdt->magic = ASPEED_MAGIC;
+	else
+		gwdt->magic = WDRESTART_MAGIC;
 
 	/*
 	 * If 'timeout-sec' unspecified in devicetree, assume a 13 second

@@ -465,7 +465,7 @@ config FTWDT010_WATCHDOG
 	depends on ARM || COMPILE_TEST
 	depends on COMMON_CLK
 	select WATCHDOG_CORE
-	default ARCH_GEMINI
+	default (ARCH_GEMINI || ARCH_MOXART)
 	help
 	  Say Y here if to include support for the Faraday Technology
 	  FTWDT010 watchdog timer embedded in the Cortina Systems Gemini
@@ -777,16 +777,6 @@ config RETU_WATCHDOG
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called retu_wdt.
-
-config MOXART_WDT
-	tristate "MOXART watchdog"
-	depends on ARCH_MOXART || COMPILE_TEST
-	help
-	  Say Y here to include Watchdog timer support for the watchdog
-	  existing on the MOXA ART SoC series platforms.
-
-	  To compile this driver as a module, choose M here: the
-	  module will be called moxart_wdt.
 
 config SIRFSOC_WATCHDOG
 	tristate "SiRFSOC watchdog"

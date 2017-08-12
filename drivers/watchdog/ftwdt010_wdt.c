@@ -291,6 +291,7 @@ static const struct dev_pm_ops ftwdt010_wdt_dev_pm_ops = {
 static const struct of_device_id ftwdt010_wdt_match[] = {
 	{ .compatible = "faraday,ftwdt010" },
 	{ .compatible = "cortina,gemini-watchdog" },
+	{ .compatible = "moxa,moxart-watchdog" },
 	{},
 };
 MODULE_DEVICE_TABLE(of, ftwdt010_wdt_match);

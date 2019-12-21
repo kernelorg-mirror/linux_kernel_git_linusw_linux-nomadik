@@ -1335,272 +1335,271 @@ static struct ab8500_reg_init ab8500_reg_init[] = {
 
 /* AB8505 register init */
 static struct ab8500_reg_init ab8505_reg_init[] = {
+	/* FROM SKOMER BOARDFILE */
+	/* ab8505 regulator register initialization */
+
 	/*
-	 * 0x03, VarmRequestCtrl
-	 * 0x0c, VsmpsCRequestCtrl
-	 * 0x30, VsmpsARequestCtrl
-	 * 0xc0, VsmpsBRequestCtrl
+	 * VarmRequestCtrl
+	 * VsmpsCRequestCtrl
+	 * VsmpsARequestCtrl
+	 * VsmpsBRequestCtrl
 	 */
-	REG_INIT(AB8505_REGUREQUESTCTRL1,	0x03, 0x03, 0xff),
+	REG_INIT(AB8505_REGUREQUESTCTRL1,       0x03, 0x00, 0x00),
 	/*
-	 * 0x03, VsafeRequestCtrl
-	 * 0x0c, VpllRequestCtrl
-	 * 0x30, VanaRequestCtrl
+	 * VsafeRequestCtrl
+	 * VpllRequestCtrl
+	 * VanaRequestCtrl          = HP/LP depending on VxRequest
 	 */
-	REG_INIT(AB8505_REGUREQUESTCTRL2,	0x03, 0x04, 0x3f),
+	REG_INIT(AB8505_REGUREQUESTCTRL2,       0x03, 0x30, 0x00),
 	/*
-	 * 0x30, Vaux1RequestCtrl
-	 * 0xc0, Vaux2RequestCtrl
+	 * Vaux1RequestCtrl         = HP/LP depending on VxRequest
+	 * Vaux2RequestCtrl         = HP/LP depending on VxRequest
 	 */
-	REG_INIT(AB8505_REGUREQUESTCTRL3,	0x03, 0x05, 0xf0),
+	REG_INIT(AB8505_REGUREQUESTCTRL3,       0x03, 0xf0, 0x00),
 	/*
-	 * 0x03, Vaux3RequestCtrl
-	 * 0x04, SwHPReq
+	 * Vaux3RequestCtrl         = HP/LP depending on VxRequest
+	 * SwHPReq                  = Control through SWValid disabled
 	 */
-	REG_INIT(AB8505_REGUREQUESTCTRL4,	0x03, 0x06, 0x07),
+	REG_INIT(AB8505_REGUREQUESTCTRL4,       0x03, 0x07, 0x00),
 	/*
-	 * 0x01, VsmpsASysClkReq1HPValid
-	 * 0x02, VsmpsBSysClkReq1HPValid
-	 * 0x04, VsafeSysClkReq1HPValid
-	 * 0x08, VanaSysClkReq1HPValid
-	 * 0x10, VpllSysClkReq1HPValid
-	 * 0x20, Vaux1SysClkReq1HPValid
-	 * 0x40, Vaux2SysClkReq1HPValid
-	 * 0x80, Vaux3SysClkReq1HPValid
+	 * VsmpsASysClkReq1HPValid
+	 * VsmpsBSysClkReq1HPValid
+	 * VsafeSysClkReq1HPValid
+	 * VanaSysClkReq1HPValid    = disabled
+	 * VpllSysClkReq1HPValid
+	 * Vaux1SysClkReq1HPValid   = disabled
+	 * Vaux2SysClkReq1HPValid   = disabled
+	 * Vaux3SysClkReq1HPValid   = disabled
 	 */
-	REG_INIT(AB8505_REGUSYSCLKREQ1HPVALID1,	0x03, 0x07, 0xff),
+	REG_INIT(AB8505_REGUSYSCLKREQ1HPVALID1, 0x03, 0xe8, 0x00),
 	/*
-	 * 0x01, VsmpsCSysClkReq1HPValid
-	 * 0x02, VarmSysClkReq1HPValid
-	 * 0x04, VbbSysClkReq1HPValid
-	 * 0x08, VsmpsMSysClkReq1HPValid
+	 * VsmpsCSysClkReq1HPValid
+	 * VarmSysClkReq1HPValid
+	 * VbbSysClkReq1HPValid
+	 * VsmpsMSysClkReq1HPValid
 	 */
-	REG_INIT(AB8505_REGUSYSCLKREQ1HPVALID2,	0x03, 0x08, 0x0f),
+	REG_INIT(AB8505_REGUSYSCLKREQ1HPVALID2, 0x03, 0x00, 0x00),
 	/*
-	 * 0x01, VsmpsAHwHPReq1Valid
-	 * 0x02, VsmpsBHwHPReq1Valid
-	 * 0x04, VsafeHwHPReq1Valid
-	 * 0x08, VanaHwHPReq1Valid
-	 * 0x10, VpllHwHPReq1Valid
-	 * 0x20, Vaux1HwHPReq1Valid
-	 * 0x40, Vaux2HwHPReq1Valid
-	 * 0x80, Vaux3HwHPReq1Valid
+	 * VsmpsAHwHPReq1Valid
+	 * VsmpsBHwHPReq1Valid
+	 * VsafeHwHPReq1Valid
+	 * VanaHwHPReq1Valid        = disabled
+	 * VpllHwHPReq1Valid
+	 * Vaux1HwHPreq1Valid       = disabled
+	 * Vaux2HwHPReq1Valid       = disabled
+	 * Vaux3HwHPReqValid        = disabled
 	 */
-	REG_INIT(AB8505_REGUHWHPREQ1VALID1,	0x03, 0x09, 0xff),
+	REG_INIT(AB8505_REGUHWHPREQ1VALID1,     0x03, 0xe8, 0x00),
 	/*
-	 * 0x08, VsmpsMHwHPReq1Valid
+	 * VsmpsMHwHPReq1Valid
 	 */
-	REG_INIT(AB8505_REGUHWHPREQ1VALID2,	0x03, 0x0a, 0x08),
+	REG_INIT(AB8505_REGUHWHPREQ1VALID2,     0x03, 0x00, 0x00),
 	/*
-	 * 0x01, VsmpsAHwHPReq2Valid
-	 * 0x02, VsmpsBHwHPReq2Valid
-	 * 0x04, VsafeHwHPReq2Valid
-	 * 0x08, VanaHwHPReq2Valid
-	 * 0x10, VpllHwHPReq2Valid
-	 * 0x20, Vaux1HwHPReq2Valid
-	 * 0x40, Vaux2HwHPReq2Valid
-	 * 0x80, Vaux3HwHPReq2Valid
+	 * VsmpsAHwHPReq2Valid
+	 * VsmpsBHwHPReq2Valid
+	 * VsafeHwHPReq2Valid
+	 * VanaHwHPReq2Valid        = disabled
+	 * VpllHwHPReq2Valid
+	 * Vaux1HwHPReq2Valid       = disabled
+	 * Vaux2HwHPReq2Valid       = disabled
+	 * Vaux3HwHPReq2Valid       = disabled
 	 */
-	REG_INIT(AB8505_REGUHWHPREQ2VALID1,	0x03, 0x0b, 0xff),
+	REG_INIT(AB8505_REGUHWHPREQ2VALID1,     0x03, 0xe8, 0x00),
 	/*
-	 * 0x08, VsmpsMHwHPReq2Valid
+	 * VsmpsMHwHPReq2Valid
 	 */
-	REG_INIT(AB8505_REGUHWHPREQ2VALID2,	0x03, 0x0c, 0x08),
+	REG_INIT(AB8505_REGUHWHPREQ2VALID2,     0x03, 0x00, 0x00),
+	/**
+	 * VsmpsCSwHPReqValid
+	 * VarmSwHPReqValid
+	 * VsmpsASwHPReqValid
+	 * VsmpsBSwHPReqValid
+	 * VsafeSwHPReqValid
+	 * VanaSwHPReqValid
+	 * VanaSwHPReqValid         = disabled
+	 * VpllSwHPReqValid
+	 * Vaux1SwHPReqValid        = disabled
+	 */
+	REG_INIT(AB8505_REGUSWHPREQVALID1,      0x03, 0xa0, 0x00),
 	/*
-	 * 0x01, VsmpsCSwHPReqValid
-	 * 0x02, VarmSwHPReqValid
-	 * 0x04, VsmpsASwHPReqValid
-	 * 0x08, VsmpsBSwHPReqValid
-	 * 0x10, VsafeSwHPReqValid
-	 * 0x20, VanaSwHPReqValid
-	 * 0x40, VpllSwHPReqValid
-	 * 0x80, Vaux1SwHPReqValid
+	 * Vaux2SwHPReqValid        = disabled
+	 * Vaux3SwHPReqValid        = disabled
+	 * VsmpsMSwHPReqValid
 	 */
-	REG_INIT(AB8505_REGUSWHPREQVALID1,	0x03, 0x0d, 0xff),
+	REG_INIT(AB8505_REGUSWHPREQVALID2,      0x03, 0x03, 0x00),
 	/*
-	 * 0x01, Vaux2SwHPReqValid
-	 * 0x02, Vaux3SwHPReqValid
-	 * 0x20, VsmpsMSwHPReqValid
+	 * SysClkReq2Valid1         = SysClkReq2 controlled
+	 * SysClkReq3Valid1         = disabled
+	 * SysClkReq4Valid1         = SysClkReq4 controlled
 	 */
-	REG_INIT(AB8505_REGUSWHPREQVALID2,	0x03, 0x0e, 0x23),
+	REG_INIT(AB8505_REGUSYSCLKREQVALID1,    0x03, 0x0e, 0x00),
 	/*
-	 * 0x02, SysClkReq2Valid1
-	 * 0x04, SysClkReq3Valid1
-	 * 0x08, SysClkReq4Valid1
+	 * SysClkReq2Valid2         = disabled
+	 * SysClkReq3Valid2         = disabled
+	 * SysClkReq4Valid2         = disabled
 	 */
-	REG_INIT(AB8505_REGUSYSCLKREQVALID1,	0x03, 0x0f, 0x0e),
+	REG_INIT(AB8505_REGUSYSCLKREQVALID2,    0x03, 0x0e, 0x00),
 	/*
-	 * 0x02, SysClkReq2Valid2
-	 * 0x04, SysClkReq3Valid2
-	 * 0x08, SysClkReq4Valid2
+	 * Vaux4SwHPReqValid
+	 * Vaux4HwHPReq2Valid
+	 * Vaux4HwHPReq1Valid
+	 * Vaux4SysClkReq1HPValid
 	 */
-	REG_INIT(AB8505_REGUSYSCLKREQVALID2,	0x03, 0x10, 0x0e),
+	REG_INIT(AB8505_REGUVAUX4REQVALID,    0x03, 0x00, 0x00),
 	/*
-	 * 0x01, Vaux4SwHPReqValid
-	 * 0x02, Vaux4HwHPReq2Valid
-	 * 0x04, Vaux4HwHPReq1Valid
-	 * 0x08, Vaux4SysClkReq1HPValid
+	 * VadcEna                  = disabled
+	 * VintCore12Ena            = disabled
+	 * VintCore12Sel            = 1.25 V
+	 * VintCore12LP             = inactive (HP)
+	 * VadcLP                   = inactive (HP)
 	 */
-	REG_INIT(AB8505_REGUVAUX4REQVALID,	0x03, 0x11, 0x0f),
+	REG_INIT(AB8505_REGUMISC1,              0x03, 0xfe, 0x10),
 	/*
-	 * 0x02, VadcEna
-	 * 0x04, VintCore12Ena
-	 * 0x38, VintCore12Sel
-	 * 0x40, VintCore12LP
-	 * 0x80, VadcLP
+	 * VaudioEna                = disabled
+	 * Vaux8Ena                 = disabled
+	 * Vamic1Ena                = disabled
+	 * Vamic2Ena                = disabled
 	 */
-	REG_INIT(AB8505_REGUMISC1,		0x03, 0x80, 0xfe),
+	REG_INIT(AB8505_VAUDIOSUPPLY,           0x03, 0x1e, 0x00),
 	/*
-	 * 0x02, VaudioEna
-	 * 0x04, VdmicEna
-	 * 0x08, Vamic1Ena
-	 * 0x10, Vamic2Ena
+	 * Vamic1_dzout             = high-Z when Vamic1 is disabled
+	 * Vamic2_dzout             = high-Z when Vamic2 is disabled
 	 */
-	REG_INIT(AB8505_VAUDIOSUPPLY,		0x03, 0x83, 0x1e),
+	REG_INIT(AB8505_REGUCTRL1VAMIC,         0x03, 0x03, 0x00),
 	/*
-	 * 0x01, Vamic1_dzout
-	 * 0x02, Vamic2_dzout
+	 * VsmpsARegu
+	 * VsmpsASelCtrl
+	 * VsmpsAAutoMode
+	 * VsmpsAPWMMode
 	 */
-	REG_INIT(AB8505_REGUCTRL1VAMIC,		0x03, 0x84, 0x03),
+	REG_INIT(AB8505_VSMPSAREGU,             0x04, 0x0f, 0x05),
 	/*
-	 * 0x03, VsmpsARegu
-	 * 0x0c, VsmpsASelCtrl
-	 * 0x10, VsmpsAAutoMode
-	 * 0x20, VsmpsAPWMMode
+	 * VsmpsBRegu
+	 * VsmpsBSelCtrl
+	 * VsmpsBAutoMode
+	 * VsmpsBPWMMode
 	 */
-	REG_INIT(AB8505_VSMPSAREGU,		0x04, 0x03, 0x3f),
+	REG_INIT(AB8505_VSMPSBREGU,             0x04, 0x0f, 0x06),
 	/*
-	 * 0x03, VsmpsBRegu
-	 * 0x0c, VsmpsBSelCtrl
-	 * 0x10, VsmpsBAutoMode
-	 * 0x20, VsmpsBPWMMode
+	 * VsafeRegu
+	 * VsafeSelCtrl
+	 * VsafeAutoMode
+	 * VsafePWMMode
 	 */
-	REG_INIT(AB8505_VSMPSBREGU,		0x04, 0x04, 0x3f),
+	REG_INIT(AB8505_VSAFEREGU,    0x04, 0x00, 0x00),
 	/*
-	 * 0x03, VsafeRegu
-	 * 0x0c, VsafeSelCtrl
-	 * 0x10, VsafeAutoMode
-	 * 0x20, VsafePWMMode
+	 * VPll                     = Hw controlled (NOTE! PRCMU bits)
+	 * VanaRegu                 = on (for DSI)
 	 */
-	REG_INIT(AB8505_VSAFEREGU,		0x04, 0x05, 0x3f),
+	REG_INIT(AB8505_VPLLVANAREGU,           0x04, 0x0f, 0x06),
 	/*
-	 * 0x03, VpllRegu (NOTE! PRCMU register bits)
-	 * 0x0c, VanaRegu
+	 * No external regulators connected to AB8505
 	 */
-	REG_INIT(AB8505_VPLLVANAREGU,		0x04, 0x06, 0x0f),
+	REG_INIT(AB8505_EXTSUPPLYREGU,          0x04, 0xff, 0x00),
 	/*
-	 * 0x03, VextSupply1Regu
-	 * 0x0c, VextSupply2Regu
-	 * 0x30, VextSupply3Regu
-	 * 0x40, ExtSupply2Bypass
-	 * 0x80, ExtSupply3Bypass
+	 * Vaux1Regu                = force off
+	 * Vaux2Regu                = force off
 	 */
-	REG_INIT(AB8505_EXTSUPPLYREGU,		0x04, 0x08, 0xff),
+	REG_INIT(AB8505_VAUX12REGU,             0x04, 0x0f, 0x00),
 	/*
-	 * 0x03, Vaux1Regu
-	 * 0x0c, Vaux2Regu
+	 * Vaux3Regu                = force off
 	 */
-	REG_INIT(AB8505_VAUX12REGU,		0x04, 0x09, 0x0f),
+	REG_INIT(AB8505_VRF1VAUX3REGU,          0x04, 0x03, 0x00),
 	/*
-	 * 0x0f, Vaux3Regu
+	 * VsmpsASel1
 	 */
-	REG_INIT(AB8505_VRF1VAUX3REGU,		0x04, 0x0a, 0x0f),
+	REG_INIT(AB8505_VSMPSASEL1,    0x04, 0x00, 0x00),
 	/*
-	 * 0x3f, VsmpsASel1
+	 * VsmpsASel2
 	 */
-	REG_INIT(AB8505_VSMPSASEL1,		0x04, 0x13, 0x3f),
+	REG_INIT(AB8505_VSMPSASEL2,    0x04, 0x00, 0x00),
 	/*
-	 * 0x3f, VsmpsASel2
+	 * VsmpsASel3
 	 */
-	REG_INIT(AB8505_VSMPSASEL2,		0x04, 0x14, 0x3f),
+	REG_INIT(AB8505_VSMPSASEL3,    0x04, 0x00, 0x00),
 	/*
-	 * 0x3f, VsmpsASel3
+	 * VsmpsBSel1
 	 */
-	REG_INIT(AB8505_VSMPSASEL3,		0x04, 0x15, 0x3f),
+	REG_INIT(AB8505_VSMPSBSEL1,    0x04, 0x00, 0x00),
 	/*
-	 * 0x3f, VsmpsBSel1
+	 * VsmpsBSel2
 	 */
-	REG_INIT(AB8505_VSMPSBSEL1,		0x04, 0x17, 0x3f),
+	REG_INIT(AB8505_VSMPSBSEL2,    0x04, 0x00, 0x00),
 	/*
-	 * 0x3f, VsmpsBSel2
+	 * VsmpsBSel3
 	 */
-	REG_INIT(AB8505_VSMPSBSEL2,		0x04, 0x18, 0x3f),
+	REG_INIT(AB8505_VSMPSBSEL3,    0x04, 0x00, 0x00),
 	/*
-	 * 0x3f, VsmpsBSel3
+	 * VsafeSel1
 	 */
-	REG_INIT(AB8505_VSMPSBSEL3,		0x04, 0x19, 0x3f),
+	REG_INIT(AB8505_VSAFESEL1,    0x04, 0x00, 0x00),
 	/*
-	 * 0x7f, VsafeSel1
+	 * VsafeSel2
 	 */
-	REG_INIT(AB8505_VSAFESEL1,		0x04, 0x1b, 0x7f),
+	REG_INIT(AB8505_VSAFESEL2,    0x04, 0x00, 0x00),
 	/*
-	 * 0x3f, VsafeSel2
+	 * VsafeSel3
 	 */
-	REG_INIT(AB8505_VSAFESEL2,		0x04, 0x1c, 0x7f),
+	REG_INIT(AB8505_VSAFESEL3,    0x04, 0x00, 0x00),
 	/*
-	 * 0x3f, VsafeSel3
+	 * Vaux1Sel                 = 3.0 V
 	 */
-	REG_INIT(AB8505_VSAFESEL3,		0x04, 0x1d, 0x7f),
+	REG_INIT(AB8505_VAUX1SEL,               0x04, 0x0f, 0x0e),
 	/*
-	 * 0x0f, Vaux1Sel
+	 * Vaux2Sel                 = 3.3 V
 	 */
-	REG_INIT(AB8505_VAUX1SEL,		0x04, 0x1f, 0x0f),
+	REG_INIT(AB8505_VAUX2SEL,               0x04, 0x0f, 0x0f),
 	/*
-	 * 0x0f, Vaux2Sel
+	 * Vaux3Sel                 = 2.91 V
 	 */
-	REG_INIT(AB8505_VAUX2SEL,		0x04, 0x20, 0x0f),
+	REG_INIT(AB8505_VRF1VAUX3SEL,           0x04, 0x07, 0x07),
 	/*
-	 * 0x07, Vaux3Sel
-	 * 0x30, VRF1Sel
+	 * Vaux4RequestCtrl         = HP/LP depending on VxRequest
 	 */
-	REG_INIT(AB8505_VRF1VAUX3SEL,		0x04, 0x21, 0x37),
+	REG_INIT(AB8505_VAUX4REQCTRL,           0x04, 0x03, 0x00),
 	/*
-	 * 0x03, Vaux4RequestCtrl
+	 * Vaux4Regu                = force off
 	 */
-	REG_INIT(AB8505_VAUX4REQCTRL,		0x04, 0x2d, 0x03),
+	REG_INIT(AB8505_VAUX4REGU,              0x04, 0x03, 0x01),
 	/*
-	 * 0x03, Vaux4Regu
+	 * Vaux4Sel                 = 3.3 V
 	 */
-	REG_INIT(AB8505_VAUX4REGU,		0x04, 0x2e, 0x03),
+	REG_INIT(AB8505_VAUX4SEL,               0x04, 0x0f, 0x0e),
 	/*
-	 * 0x0f, Vaux4Sel
+	 * Vaux1Disch               = short discharge time
+	 * Vaux2Disch               = short discharge time
+	 * Vaux3Disch               = short discharge time
+	 * Vintcore12Disch          = short discharge time
+	 * VTVoutDisch              = short discharge time
+	 * VaudioDisch              = short discharge time
 	 */
-	REG_INIT(AB8505_VAUX4SEL,		0x04, 0x2f, 0x0f),
+	REG_INIT(AB8505_REGUCTRLDISCH,          0x04, 0xec, 0x00),
 	/*
-	 * 0x04, Vaux1Disch
-	 * 0x08, Vaux2Disch
-	 * 0x10, Vaux3Disch
-	 * 0x20, Vintcore12Disch
-	 * 0x40, VTVoutDisch
-	 * 0x80, VaudioDisch
+	 * VanaDisch                = short discharge time
+	 * Vaux8PullDownEna         = pulldown disabled when Vaux8 is disabled
+	 * Vaux8Disch               = short discharge time
 	 */
-	REG_INIT(AB8505_REGUCTRLDISCH,		0x04, 0x43, 0xfc),
+	REG_INIT(AB8505_REGUCTRLDISCH2,         0x04, 0x16, 0x04),
 	/*
-	 * 0x02, VanaDisch
-	 * 0x04, VdmicPullDownEna
-	 * 0x10, VdmicDisch
+	 * Vaux4Disch               = short discharge time
 	 */
-	REG_INIT(AB8505_REGUCTRLDISCH2,		0x04, 0x44, 0x16),
+	REG_INIT(AB8505_REGUCTRLDISCH3,         0x04, 0x01, 0x00),
 	/*
-	 * 0x01, Vaux4Disch
+	 * Vaux5Sel - 1.8V
+	 * Vaux5HP
+	 * Vaux5Ena - disabled
+	 * Vaux5Disch
+	 * Vaux5DisSfst
+	 * Vaux5DisPulld
 	 */
-	REG_INIT(AB8505_REGUCTRLDISCH3,		0x04, 0x48, 0x01),
+	REG_INIT(AB8505_CTRLVAUX5,              0x01, 0xff, 0x00),
 	/*
-	 * 0x07, Vaux5Sel
-	 * 0x08, Vaux5LP
-	 * 0x10, Vaux5Ena
-	 * 0x20, Vaux5Disch
-	 * 0x40, Vaux5DisSfst
-	 * 0x80, Vaux5DisPulld
+	 * Vaux6Sel - 2.2V
+	 * Vaux6HP
+	 * Vaux6Ena - disabled
+	 * Vaux6DisPulld
 	 */
-	REG_INIT(AB8505_CTRLVAUX5,		0x01, 0x55, 0xff),
-	/*
-	 * 0x07, Vaux6Sel
-	 * 0x08, Vaux6LP
-	 * 0x10, Vaux6Ena
-	 * 0x80, Vaux6DisPulld
-	 */
-	REG_INIT(AB8505_CTRLVAUX6,		0x01, 0x56, 0x9f),
+	REG_INIT(AB8505_CTRLVAUX6,              0x01, 0x9f, 0x10),
 };
 
 static struct of_regulator_match ab8500_regulator_match[] = {

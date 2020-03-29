@@ -173,6 +173,12 @@
 				};
 			};
 		};
+		touchscreen@48 {
+			compatible = "ti,tsc2003";
+			reg = <0x48>;
+			interrupt-parent = <&stmpe_gpio44>;
+			interrupts = <6 IRQ_TYPE_EDGE_FALLING>; // EXP1_GPIO6
+		};
 	};
 
 	amba {

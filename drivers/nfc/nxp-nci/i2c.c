@@ -20,6 +20,7 @@
 #include <linux/nfc.h>
 #include <linux/gpio/consumer.h>
 #include <linux/unaligned.h>
+#include <linux/mfd/abx500/ab8500-sysctrl.h>
 
 #include <net/nfc/nfc.h>
 
@@ -281,6 +282,14 @@ static int nxp_nci_i2c_probe(struct i2c_client *client)
 
 	phy->i2c_dev = client;
 	i2c_set_clientdata(client, phy);
+
+	/* HACK */
+	r = ab8500_sysctrl_write(AB8500_SYSCLKREQ4RFCLKBUF,
+			AB8500_SYSCLKREQ4RFCLKBUF_SYSCLKREQ4RFCLKBUF4,
+			AB8500_SYSCLKREQ4RFCLKBUF_SYSCLKREQ4RFCLKBUF4);
+        if (r) {
+                pr_err("%s : AB8500 SysClkReq4ClkBuf write failed with errror %d\n", __func__, r);
+	}
 
 	r = devm_acpi_dev_add_driver_gpios(dev, acpi_nxp_nci_gpios);
 	if (r)

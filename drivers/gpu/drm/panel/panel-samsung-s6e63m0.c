@@ -17,6 +17,8 @@
 #include <linux/module.h>
 #include <linux/regulator/consumer.h>
 #include <linux/media-bus-format.h>
+#include <linux/of_irq.h>
+#include <linux/interrupt.h>
 
 #include <video/mipi_display.h>
 
@@ -666,6 +668,18 @@ static int s6e63m0_backlight_register(struct s6e63m0 *ctx, u32 max_brightness)
 	return ret;
 }
 
+static irqreturn_t s6e63m0_esd_irq(int irq, void *data)
+{
+	struct s6e63m0 *ctx = data;
+
+	dev_info(ctx->dev, "ESD IRQ occurred\n");
+
+	/* Signal to the display controller to restart? */
+	msleep(100);
+
+	return IRQ_HANDLED;
+}
+
 int s6e63m0_probe(struct device *dev, void *trsp,
 		  int (*dcs_read)(struct device *dev, void *trsp, const u8 cmd, u8 *val),
 		  int (*dcs_write)(struct device *dev, void *trsp, const u8 *data, size_t len),
@@ -673,6 +687,7 @@ int s6e63m0_probe(struct device *dev, void *trsp,
 {
 	struct s6e63m0 *ctx;
 	u32 max_brightness;
+	int irq;
 	int ret;
 
 	ctx = devm_kzalloc(dev, sizeof(struct s6e63m0), GFP_KERNEL);
@@ -708,6 +723,13 @@ int s6e63m0_probe(struct device *dev, void *trsp,
 	if (IS_ERR(ctx->reset_gpio)) {
 		dev_err(dev, "cannot get reset-gpios %ld\n", PTR_ERR(ctx->reset_gpio));
 		return PTR_ERR(ctx->reset_gpio);
+	}
+
+	irq = of_irq_get(dev->of_node, 0);
+	if (irq) {
+		ret = devm_request_threaded_irq(dev, irq, NULL,
+						s6e63m0_esd_irq, IRQF_ONESHOT,
+						"s6e63m0-esd", ctx);
 	}
 
 	drm_panel_init(&ctx->panel, dev, &s6e63m0_drm_funcs,

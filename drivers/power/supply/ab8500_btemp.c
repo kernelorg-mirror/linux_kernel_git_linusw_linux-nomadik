@@ -382,7 +382,7 @@ static irqreturn_t ab8500_btemp_temphigh_handler(int irq, void *_di)
 {
 	struct ab8500_btemp *di = _di;
 
-	dev_crit(di->dev, "Battery temperature is higher than MAX temp\n");
+	dev_dbg(di->dev, "Battery temperature is higher than MAX temp\n");
 
 	di->events.btemp_high = true;
 	di->events.btemp_medhigh = false;

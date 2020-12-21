@@ -458,8 +458,8 @@ static int ab8500_handle_hierarchical_line(struct ab8500 *ab8500,
 			break;
 
 	if (i >= ab8500->mask_size) {
-		dev_err(ab8500->dev, "Register offset 0x%2x not declared\n",
-				latch_offset);
+		dev_dbg(ab8500->dev, "Register offset 0x%2x not declared\n",
+			latch_offset);
 		return -ENXIO;
 	}
 

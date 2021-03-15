@@ -488,6 +488,16 @@ struct brcmf_mp_device *brcmf_get_module_param(struct device *dev,
 		brcmf_dmi_probe(settings, chip, chiprev);
 		brcmf_of_probe(dev, bus_type, settings);
 	}
+	/* Fetch WL_RESET GPIO and de-assert it, if available */
+	settings->reset = devm_gpiod_get_optional(dev, "reset", GPIOD_OUT_LOW);
+	if (settings->reset) {
+		/*
+		 * If we found a reset GPIO, we may have just de-asserted it
+		 * so wait some 8 ms for PLLs to lock, se figure 32, WLAN
+		 * boot-up sequence in the manual.
+		 */
+		usleep_range(8000, 10000);
+	}
 	return settings;
 }
 

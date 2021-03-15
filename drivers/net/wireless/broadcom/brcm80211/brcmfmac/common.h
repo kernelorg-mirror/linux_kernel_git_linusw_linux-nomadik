@@ -7,6 +7,7 @@
 
 #include <linux/platform_device.h>
 #include <linux/platform_data/brcmfmac.h>
+#include <linux/gpio/consumer.h>
 #include "fwil_types.h"
 
 #define BRCMF_FW_ALTPATH_LEN			256
@@ -40,6 +41,8 @@ extern struct brcmf_mp_global_t brcmf_mp_global;
  * @ignore_probe_fail: Ignore probe failure.
  * @trivial_ccode_map: Assume firmware uses ISO3166 country codes with rev 0
  * @country_codes: If available, pointer to struct for translating country codes
+ * @board_type: String with the board type name
+ * @reset: GPIO descriptor for the RESET line
  * @bus: Bus specific platform data. Only SDIO at the mmoment.
  */
 struct brcmf_mp_device {
@@ -53,6 +56,7 @@ struct brcmf_mp_device {
 	struct brcmfmac_pd_cc *country_codes;
 	const char	*board_type;
 	unsigned char	mac[ETH_ALEN];
+	struct gpio_desc *reset;
 	union {
 		struct brcmfmac_sdio_pd sdio;
 	} bus;

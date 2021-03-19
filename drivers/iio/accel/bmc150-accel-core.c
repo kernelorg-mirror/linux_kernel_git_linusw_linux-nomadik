@@ -827,20 +827,6 @@ static int bmc150_accel_write_event_config(struct iio_dev *indio_dev,
 	return 0;
 }
 
-static int bmc150_accel_validate_trigger(struct iio_dev *indio_dev,
-					 struct iio_trigger *trig)
-{
-	struct bmc150_accel_data *data = iio_priv(indio_dev);
-	int i;
-
-	for (i = 0; i < BMC150_ACCEL_TRIGGERS; i++) {
-		if (data->triggers[i].indio_trig == trig)
-			return 0;
-	}
-
-	return -EINVAL;
-}
-
 static ssize_t bmc150_accel_get_fifo_watermark(struct device *dev,
 					       struct device_attribute *attr,
 					       char *buf)
@@ -1173,7 +1159,6 @@ static const struct iio_info bmc150_accel_info_fifo = {
 	.write_event_value	= bmc150_accel_write_event,
 	.write_event_config	= bmc150_accel_write_event_config,
 	.read_event_config	= bmc150_accel_read_event_config,
-	.validate_trigger	= bmc150_accel_validate_trigger,
 	.hwfifo_set_watermark	= bmc150_accel_set_watermark,
 	.hwfifo_flush_to_buffer	= bmc150_accel_fifo_flush,
 };

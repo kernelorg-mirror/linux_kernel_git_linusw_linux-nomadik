@@ -40,10 +40,18 @@
 #define DB7430_UNKNOWN_D4		0xd4
 #define DB7430_DCDC_CTRL		0xd5
 #define DB7430_VCL_CTRL			0xd6
+#define DB7430_READ_ID1			0xda
+#define DB7430_READ_ID2			0xdb
+#define DB7430_READ_ID3			0xdc
 #define DB7430_UNKNOWN_F8		0xf8
 #define DB7430_UNKNOWN_FC		0xfc
 
-#define DATA_MASK	0x100
+static const u8 db7430_dbi_read_commands[] = {
+	DB7430_READ_ID1,
+	DB7430_READ_ID2,
+	DB7430_READ_ID3,
+	0, /* sentinel */
+};
 
 /**
  * struct db7430 - state container for a panel controlled by the DB7430
@@ -90,6 +98,30 @@ static inline struct db7430 *to_db7430(struct drm_panel *panel)
 	return container_of(panel, struct db7430, panel);
 }
 
+static void db7430_read_mtp_id(struct db7430 *db)
+{
+	struct mipi_dbi *dbi = &db->dbi;
+	u8 id1, id2, id3;
+	int ret;
+
+	ret = mipi_dbi_command_read(dbi, DB7430_READ_ID1, &id1);
+	if (ret) {
+		dev_err(db->dev, "unable to read MTP ID 1\n");
+		return;
+	}
+	ret = mipi_dbi_command_read(dbi, DB7430_READ_ID2, &id2);
+	if (ret) {
+		dev_err(db->dev, "unable to read MTP ID 2\n");
+		return;
+	}
+	ret = mipi_dbi_command_read(dbi, DB7430_READ_ID3, &id3);
+	if (ret) {
+		dev_err(db->dev, "unable to read MTP ID 3\n");
+		return;
+	}
+	dev_info(db->dev, "MTP ID: %02x %02x %02x\n", id1, id2, id3);
+}
+
 static int db7430_power_on(struct db7430 *db)
 {
 	struct mipi_dbi *dbi = &db->dbi;
@@ -112,6 +144,9 @@ static int db7430_power_on(struct db7430 *db)
 	/* Wait >= 10 ms */
 	msleep(10);
 	dev_dbg(db->dev, "de-asserted RESET\n");
+
+	db7430_read_mtp_id(db);
+
 
 	/*
 	 * This is set to 0x0a (RGB/BGR order + horizontal flip) in order
@@ -297,6 +332,7 @@ static int db7430_probe(struct spi_device *spi)
 	ret = mipi_dbi_spi_init(spi, &db->dbi, NULL);
 	if (ret)
 		return dev_err_probe(dev, ret, "MIPI DBI init failed\n");
+	db->dbi.read_commands = db7430_dbi_read_commands;
 
 	drm_panel_init(&db->panel, dev, &db7430_drm_funcs,
 		       DRM_MODE_CONNECTOR_DPI);

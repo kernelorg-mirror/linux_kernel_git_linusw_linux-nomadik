@@ -21,6 +21,7 @@
 #include <linux/slab.h>
 #include <linux/wait.h>
 
+#define SIRF_RESET_DELAY		1
 #define SIRF_BOOT_DELAY			500
 #define SIRF_ON_OFF_PULSE_TIME		100
 #define SIRF_ACTIVATE_TIMEOUT		200
@@ -43,6 +44,7 @@ struct sirf_data {
 	struct regulator *lna;
 	struct gpio_desc *on_off;
 	struct gpio_desc *wakeup;
+	struct gpio_desc *reset;
 	int irq;
 	bool active;
 
@@ -67,6 +69,7 @@ static int sirf_serdev_open(struct sirf_data *data)
 			goto out_unlock;
 		}
 
+		pr_info("sirf_serdev_open() set baudrate %d bps\n", data->speed);
 		serdev_device_set_baudrate(data->serdev, data->speed);
 		serdev_device_set_flow_control(data->serdev, false);
 	}
@@ -209,6 +212,7 @@ static int sirf_wait_for_power_state_nowakeup(struct sirf_data *data,
 	int ret;
 
 	/* Wait for state change (including any shutdown messages). */
+	pr_info("sirf_wait_for_power_state_nowakeup()\n");
 	msleep(timeout);
 
 	/* Wait for data reception or timeout. */
@@ -251,6 +255,7 @@ static int sirf_wait_for_power_state(struct sirf_data *data, bool active,
 
 static void sirf_pulse_on_off(struct sirf_data *data)
 {
+	pr_info("sirf_pulse_on_off()\n");
 	gpiod_set_value_cansleep(data->on_off, 1);
 	msleep(SIRF_ON_OFF_PULSE_TIME);
 	gpiod_set_value_cansleep(data->on_off, 0);
@@ -269,14 +274,23 @@ static int sirf_set_active(struct sirf_data *data, bool active)
 
 	if (!data->wakeup) {
 		ret = sirf_serdev_open(data);
-		if (ret)
+		if (ret) {
+			pr_err("failed to open serial device\n");
 			return ret;
+		}
 	}
 
 	do {
 		sirf_pulse_on_off(data);
 		ret = sirf_wait_for_power_state(data, active, timeout);
 	} while (ret == -ETIMEDOUT && retries--);
+
+	/* Reset after exiting hibernation */
+	//if (data->reset) {
+	//	gpiod_set_value(data->reset, 1);
+	//	msleep(SIRF_RESET_DELAY);
+	//	gpiod_set_value(data->reset, 0);
+	//}
 
 	if (!data->wakeup)
 		sirf_serdev_close(data);
@@ -327,13 +341,20 @@ static int sirf_runtime_resume(struct device *dev)
 	int ret;
 
 	ret = regulator_enable(data->lna);
-	if (ret)
+	if (ret) {
+		dev_err(dev, "faile to enable LNA regulator\n");
 		return ret;
+	}
 
-	if (data->on_off)
+	if (data->on_off) {
 		ret = sirf_set_active(data, true);
-	else
+		if (ret)
+			dev_err(dev, "sirf_set_active failed\n");
+	} else {
 		ret = regulator_enable(data->vcc);
+		if (ret)
+			dev_err(dev, "regulator enable failed\n");
+	}
 
 	if (ret)
 		goto err_disable_lna;
@@ -444,6 +465,14 @@ static int sirf_probe(struct serdev_device *serdev)
 		goto err_put_device;
 	}
 
+	/* Start out with reset deasserted (gpiolib will invert it) */
+	data->reset = devm_gpiod_get_optional(dev, "reset",
+			GPIOD_OUT_LOW);
+	if (IS_ERR(data->reset)) {
+		ret = PTR_ERR(data->reset);
+		goto err_put_device;
+	}
+
 	if (data->on_off) {
 		data->wakeup = devm_gpiod_get_optional(dev, "sirf,wakeup",
 				GPIOD_IN);
@@ -452,6 +481,7 @@ static int sirf_probe(struct serdev_device *serdev)
 			goto err_put_device;
 		}
 
+		/* When using ON_OFF, the regulator is always on */
 		ret = regulator_enable(data->vcc);
 		if (ret)
 			goto err_put_device;
@@ -555,6 +585,8 @@ static void sirf_remove(struct serdev_device *serdev)
 
 #ifdef CONFIG_OF
 static const struct of_device_id sirf_of_match[] = {
+	{ .compatible = "csr,gsd4t" },
+	{ .compatible = "csr,csrg05ta03-icje-r" },
 	{ .compatible = "fastrax,uc430" },
 	{ .compatible = "linx,r4" },
 	{ .compatible = "wi2wi,w2sg0004" },

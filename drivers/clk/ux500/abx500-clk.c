@@ -36,11 +36,24 @@ static int ab8500_reg_clks(struct device *dev)
 		0 ,
 		(1 << AB8500_SYSULPCLKCTRL1_SYSULPCLKINTSEL_SHIFT)
 	};
+	u8 val;
 
 	/* Enable SWAT */
 	ret = ab8500_sysctrl_set(AB8500_SWATCTRL, AB8500_SWATCTRL_SWATENABLE);
 	if (ret)
 		return ret;
+
+	/* Disable CLK32KOUT2 until requested? */
+	ret = ab8500_sysctrl_write(AB8500_STW4500CTRL3,
+				   AB8500_STW4500CTRL3_CLK32KOUT2DIS,
+				   0);
+	// AB8500_STW4500CTRL3_CLK32KOUT2DIS);
+	if (ret)
+		return ret;
+	ret = ab8500_sysctrl_read(AB8500_STW4500CTRL3, &val);
+	if (ret)
+		return ret;
+	pr_info("AB8500_STW4500CTRL3 = 0x%02x\n", val);
 
 	/* ab8500_sysclk2 */
 	clk = clk_reg_sysctrl_gate(dev , "ab8500_sysclk2", "ab8500_sysclk",

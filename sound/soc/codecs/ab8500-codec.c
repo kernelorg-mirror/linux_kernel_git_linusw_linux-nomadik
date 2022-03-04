@@ -1920,11 +1920,10 @@ static int ab8500_audio_init_audioblock(struct snd_soc_component *component)
 
 	dev_dbg(component->dev, "%s: Enter.\n", __func__);
 
-	/* Reset audio-registers and disable 32kHz-clock output 2 */
+	/* Reset audio-registers */
 	status = ab8500_sysctrl_write(AB8500_STW4500CTRL3,
-				AB8500_STW4500CTRL3_CLK32KOUT2DIS |
-					AB8500_STW4500CTRL3_RESETAUDN,
-				AB8500_STW4500CTRL3_RESETAUDN);
+				      AB8500_STW4500CTRL3_RESETAUDN,
+				      AB8500_STW4500CTRL3_RESETAUDN);
 	if (status < 0)
 		return status;
 

@@ -657,6 +657,7 @@ static u32 ux500v2_get_dctrl_cfg(struct mmci_host *host)
 static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 {
 	void __iomem *base = host->base;
+	static int busystate = 0;
 
 	/*
 	 * Before unmasking for the busy end IRQ, confirm that the
@@ -678,6 +679,7 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 		       base + MMCIMASK0);
 
 		host->busy_status = status & (MCI_CMDSENT | MCI_CMDRESPEND);
+		busystate = 0;
 		return false;
 	}
 
@@ -695,6 +697,10 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 	if (host->busy_status &&
 	    (status & host->variant->busy_detect_flag)) {
 		writel(host->variant->busy_detect_mask, base + MMCICLEAR);
+		if (busystate == 1) {
+			dev_info(mmc_dev(host->mmc), "(1) ux500_busy_complete() busy start IRQ before busy end IRQ was recieved!\n");
+		}
+		busystate = 1;
 		return false;
 	}
 
@@ -710,6 +716,9 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 		writel(readl(base + MMCIMASK0) &
 		       ~host->variant->busy_detect_mask, base + MMCIMASK0);
 		host->busy_status = 0;
+		if (busystate == 0)
+			dev_info(mmc_dev(host->mmc), "(2) ux500_busy_complete() busy end IRQ without busy start IRQ!\n");
+		busystate = 0;
 	}
 
 	return true;

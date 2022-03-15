@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/input/immersion,isa1200.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: Immersion ISA1200 Haptic Feedback Unit
+
+maintainers:
+  - Linus Walleij <linus.walleij@linaro.org>
+
+description:
+  The Immersion ISA1200 is a haptic feedback chip using two motors of
+  LRA or ERM type. It can generate a PWM signal to control the motors from
+  a fixed input clock, or it can amplify and modify an existing PWM
+  input. It is communicating with the host system using I2C.
+
+properties:
+  compatible:
+    description: One compatible per product using this chip. Each product
+      need deliberate custom values for things such as LRA resonance
+      frequency and these are not stored in the device tree, rather we
+      let the operating system look up the appropriate parameters from a
+      table.
+    enum:
+      - immersion,isa1200-janice
+      - immersion,isa1200-gavini
+
+  reg:
+    description: I2C address for the ISA1200
+
+  hen-gpios:
+    description: GPIO line that drives the HEN (Motor Hardware Enable) pin
+      on the chip.
+    maxItems: 1
+
+  len-gpios:
+    description: GPIO line that drives the LEN (LDO Enable) pin on the chip.
+    maxItems: 1
+
+  clocks:
+    description: Clock that drives the chip if using the chip to generate a
+      PWM from a clock. Either clocks or pwms must be defined.
+    maxItems: 1
+
+  pwms:
+    description: PWM that drives the chip if using an external PWM generator.
+      Either pwms or clocks must be defined.
+    maxItems: 1
+
+required:
+  - compatible
+  - reg
+  - hen-gpios
+  - len-gpios
+
+additionalProperties: false
+
+examples:
+  - |
+    #include <dt-bindings/gpio/gpio.h>
+
+    i2c {
+      #address-cells = <1>;
+      #size-cells = <0>;
+
+      haptic@49 {
+        compatible = "immersion,isa1200-janice";
+        reg = <0x49>;
+        hen-gpios = <&gpio6 2 GPIO_ACTIVE_HIGH>;
+        len-gpios = <&gpio6 3 GPIO_ACTIVE_HIGH>;
+        clocks = <&clkout_clk>;
+      };
+    };

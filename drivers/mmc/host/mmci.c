@@ -1381,7 +1381,7 @@ mmci_cmd_irq(struct mmci_host *host, struct mmc_command *cmd,
 		return;
 
 	/* Handle busy detection on DAT0 if the variant supports it. */
-	if (busy_resp && host->variant->busy_detect)
+	if (busy_resp && host->variant->busy_detect && host->ops->busy_complete)
 		if (!host->ops->busy_complete(host, status, err_msk))
 			return;
 

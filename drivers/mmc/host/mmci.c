@@ -1238,17 +1238,21 @@ mmci_start_command(struct mmci_host *host, struct mmc_command *cmd, u32 c)
 			c |= host->variant->cmdreg_srsp;
 	}
 
-	if (host->variant->busy_timeout && cmd->flags & MMC_RSP_BUSY) {
-		if (!cmd->busy_timeout)
-			cmd->busy_timeout = 10 * MSEC_PER_SEC;
+	if (cmd->flags & MMC_RSP_BUSY) {
+		host->busy_status = 0;
 
-		if (cmd->busy_timeout > host->mmc->max_busy_timeout)
-			clks = (unsigned long long)host->mmc->max_busy_timeout * host->cclk;
-		else
-			clks = (unsigned long long)cmd->busy_timeout * host->cclk;
+		if (host->variant->busy_timeout) {
+			if (!cmd->busy_timeout)
+				cmd->busy_timeout = 10 * MSEC_PER_SEC;
 
-		do_div(clks, MSEC_PER_SEC);
-		writel_relaxed(clks, host->base + MMCIDATATIMER);
+			if (cmd->busy_timeout > host->mmc->max_busy_timeout)
+				clks = (unsigned long long)host->mmc->max_busy_timeout * host->cclk;
+			else
+				clks = (unsigned long long)cmd->busy_timeout * host->cclk;
+
+			do_div(clks, MSEC_PER_SEC);
+			writel_relaxed(clks, host->base + MMCIDATATIMER);
+		}
 	}
 
 	if (host->ops->pre_sig_volt_switch && cmd->opcode == SD_SWITCH_VOLTAGE)

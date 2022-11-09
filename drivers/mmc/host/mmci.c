@@ -339,6 +339,12 @@ static int mmci_card_busy(struct mmc_host *mmc)
 	unsigned long flags;
 	int busy = 0;
 
+	/* If we are waiting for IRQs we are certainly busy */
+	if (host->ops->busy_complete &&
+	    host->busy_state != MMCI_BUSY_IDLE &&
+	    host->busy_state != MMCI_BUSY_DONE)
+		return 1;
+
 	spin_lock_irqsave(&host->lock, flags);
 	if (readl(host->base + MMCISTATUS) & host->variant->busy_detect_flag)
 		busy = 1;

@@ -339,6 +339,14 @@ static int mmci_card_busy(struct mmc_host *mmc)
 	unsigned long flags;
 	int busy = 0;
 
+	if (host->ops->busy_complete) {
+		if ((host->busy_state == MMCI_BUSY_IDLE) ||
+		    (host->busy_state == MMCI_BUSY_DONE))
+			return 0;
+		else
+			return 1;
+	}
+
 	spin_lock_irqsave(&host->lock, flags);
 	if (readl(host->base + MMCISTATUS) & host->variant->busy_detect_flag)
 		busy = 1;

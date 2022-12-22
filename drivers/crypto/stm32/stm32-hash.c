@@ -166,7 +166,7 @@ struct stm32_hash_dev {
 	struct reset_control	*rst;
 	void __iomem		*io_base;
 	phys_addr_t		phys_base;
-	u32			dma_mode;
+	bool			dma_mode;
 	u32			dma_maxburst;
 
 	struct ahash_request	*req;
@@ -481,7 +481,7 @@ static int stm32_hash_hmac_dma_send(struct stm32_hash_dev *hdev)
 	struct stm32_hash_ctx *ctx = crypto_ahash_ctx(tfm);
 	int err;
 
-	if (ctx->keylen < HASH_DMA_THRESHOLD || (hdev->dma_mode == 1)) {
+	if (ctx->keylen < HASH_DMA_THRESHOLD || (hdev->dma_mode)) {
 		err = stm32_hash_write_key(hdev);
 		if (stm32_hash_wait_busy(hdev))
 			return -ETIMEDOUT;
@@ -568,7 +568,7 @@ static int stm32_hash_dma_send(struct stm32_hash_dev *hdev)
 
 		sg[0] = *tsg;
 		if (sg_is_last(sg)) {
-			if (hdev->dma_mode == 1) {
+			if (hdev->dma_mode) {
 				len = (ALIGN(sg->length, 16) - 16);
 
 				ncp = sg_pcopy_to_buffer(
@@ -602,7 +602,7 @@ static int stm32_hash_dma_send(struct stm32_hash_dev *hdev)
 			return err;
 	}
 
-	if (hdev->dma_mode == 1) {
+	if (hdev->dma_mode) {
 		if (stm32_hash_wait_busy(hdev))
 			return -ETIMEDOUT;
 		reg = stm32_hash_read(hdev, HASH_CR);
@@ -663,7 +663,7 @@ static bool stm32_hash_dma_aligned_data(struct ahash_request *req)
 		return false;
 
 	if (sg_nents(req->src) > 1) {
-		if (hdev->dma_mode == 1)
+		if (hdev->dma_mode)
 			return false;
 		for_each_sg(req->src, sg, sg_nents(req->src), i) {
 			if ((!IS_ALIGNED(sg->length, sizeof(u32))) &&
@@ -1525,7 +1525,7 @@ static int stm32_hash_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_engine_start;
 
-	hdev->dma_mode = stm32_hash_read(hdev, HASH_HWCFGR);
+	hdev->dma_mode = !!stm32_hash_read(hdev, HASH_HWCFGR);
 
 	/* Register algos */
 	ret = stm32_hash_register_algs(hdev);

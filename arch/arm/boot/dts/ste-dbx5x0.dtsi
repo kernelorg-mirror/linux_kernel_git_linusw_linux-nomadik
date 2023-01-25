@@ -109,6 +109,49 @@
 		interrupt-parent = <&intc>;
 		ranges;
 
+		/*
+		 * ESRAM - 640K Embedded Static RAM, 5 banks of 128K each
+		 * this memory is used when you need something fast.
+		 * Bank 0, bank 1+2 and bank 3+4 are power controlled
+		 * indidually making these three different nodes necessary.
+		 */
+		sram@40000000 {
+			compatible = "mmio-sram";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0 0x40000000 0x20000>;
+
+			sram0@0 {
+				reg = <0x00000 0x20000>;
+			};
+		};
+		sram@40020000 {
+			compatible = "mmio-sram";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0 0x40020000 0x40000>;
+
+			sram1@0 {
+				reg = <0x00000 0x20000>;
+			};
+			sram2@20000 {
+				reg = <0x20000 0x20000>;
+			};
+		};
+		sram@40060000 {
+			compatible = "mmio-sram";
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0 0x40060000 0x40000>;
+
+			sram3@0 {
+				reg = <0x00000 0x20000>;
+			};
+			sram4@20000 {
+				reg = <0x20000 0x20000>;
+			};
+		};
+
 		ptm@801ae000 {
 			compatible = "arm,coresight-etm3x", "arm,primecell";
 			reg = <0x801ae000 0x1000>;

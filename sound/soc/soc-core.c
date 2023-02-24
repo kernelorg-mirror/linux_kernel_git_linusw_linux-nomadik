@@ -744,11 +744,17 @@ static int snd_soc_is_matching_component(
 		return 0;
 
 	component_of_node = soc_component_to_node(component);
+	pr_info("  component has of node %s\n", component_of_node->name);
 
-	if (dlc->of_node && component_of_node != dlc->of_node)
+	if (dlc->of_node && component_of_node != dlc->of_node) {
+		pr_info("  dlc has of node %s\n", dlc->of_node->name);
+		pr_info("  component has of node %s\n", component_of_node->name);
 		return 0;
+	}
+	pr_info("  dlc has no of_node, try name matching\n");
 	if (dlc->name && strcmp(component->name, dlc->name))
 		return 0;
+	pr_info("  dlc has no name or doesnt match\n");
 
 	return 1;
 }
@@ -854,7 +860,7 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 		 * component list.
 		 */
 		if (!soc_find_component(codec)) {
-			dev_dbg(card->dev,
+			dev_info(card->dev,
 				"ASoC: codec component %s not found for link %s\n",
 				codec->name, link->name);
 			return -EPROBE_DEFER;
@@ -879,7 +885,7 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 		 * component list.
 		 */
 		if (!soc_find_component(platform)) {
-			dev_dbg(card->dev,
+			dev_info(card->dev,
 				"ASoC: platform component %s not found for link %s\n",
 				platform->name, link->name);
 			return -EPROBE_DEFER;
@@ -905,7 +911,7 @@ static int soc_dai_link_sanity_check(struct snd_soc_card *card,
 		 */
 		if ((cpu->of_node || cpu->name) &&
 		    !soc_find_component(cpu)) {
-			dev_dbg(card->dev,
+			dev_info(card->dev,
 				"ASoC: cpu component %s not found for link %s\n",
 				cpu->name, link->name);
 			return -EPROBE_DEFER;
@@ -979,11 +985,13 @@ static int snd_soc_add_pcm_runtime(struct snd_soc_card *card,
 	if (dai_link->ignore)
 		return 0;
 
-	dev_dbg(card->dev, "ASoC: binding %s\n", dai_link->name);
+	dev_info(card->dev, "ASoC: binding %s\n", dai_link->name);
 
 	ret = soc_dai_link_sanity_check(card, dai_link);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(card->dev, "soc_dai_link_sanity_check() failed\n");
 		return ret;
+	}
 
 	rtd = soc_new_pcm_runtime(card, dai_link);
 	if (!rtd)
@@ -1947,8 +1955,10 @@ static int snd_soc_bind_card(struct snd_soc_card *card)
 
 	/* bind aux_devs too */
 	ret = soc_bind_aux_dev(card);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(card->dev, "aux dev bind failed\n");
 		goto probe_end;
+	}
 
 	/* add predefined DAI links to the list */
 	card->num_rtd = 0;
@@ -1972,18 +1982,24 @@ static int snd_soc_bind_card(struct snd_soc_card *card)
 
 	ret = snd_soc_dapm_new_controls(&card->dapm, card->dapm_widgets,
 					card->num_dapm_widgets);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(card->dev, "snd_soc_dapm_new_controls(card->dapm_widgets) failed\n");
 		goto probe_end;
+	}
 
 	ret = snd_soc_dapm_new_controls(&card->dapm, card->of_dapm_widgets,
 					card->num_of_dapm_widgets);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(card->dev, "snd_soc_dapm_new_controls(card->of_dapm_widgets) failed\n");
 		goto probe_end;
+	}
 
 	/* initialise the sound card only once */
 	ret = snd_soc_card_probe(card);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(card->dev, "snd_soc_card_probe() failed\n");
 		goto probe_end;
+	}
 
 	/* probe all components used by DAI links on this card */
 	ret = soc_probe_link_components(card);
@@ -2011,8 +2027,10 @@ static int snd_soc_bind_card(struct snd_soc_card *card)
 
 	for_each_card_rtds(card, rtd) {
 		ret = soc_init_pcm_runtime(card, rtd);
-		if (ret < 0)
+		if (ret < 0) {
+			dev_err(card->dev, "soc_init_pcm_runtime() failed\n");
 			goto probe_end;
+		}
 	}
 
 	snd_soc_dapm_link_dai_widgets(card);
@@ -2020,8 +2038,10 @@ static int snd_soc_bind_card(struct snd_soc_card *card)
 
 	ret = snd_soc_add_card_controls(card, card->controls,
 					card->num_controls);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(card->dev, "snd_soc_add_card_controls() failed\n");
 		goto probe_end;
+	}
 
 	ret = snd_soc_dapm_add_routes(&card->dapm, card->dapm_routes,
 				      card->num_dapm_routes);
@@ -2040,8 +2060,10 @@ static int snd_soc_bind_card(struct snd_soc_card *card)
 
 	ret = snd_soc_dapm_add_routes(&card->dapm, card->of_dapm_routes,
 				      card->num_of_dapm_routes);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(card->dev, "snd_soc_dapm_add_routes(of) failed\n");
 		goto probe_end;
+	}
 
 	/* try to set some sane longname if DMI is available */
 	snd_soc_set_dmi_name(card, NULL);
@@ -2067,8 +2089,10 @@ static int snd_soc_bind_card(struct snd_soc_card *card)
 	}
 
 	ret = snd_soc_card_late_probe(card);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(card->dev, "snd_soc_card_late_probe() failed\n");
 		goto probe_end;
+	}
 
 	snd_soc_dapm_new_widgets(card);
 	snd_soc_card_fixup_controls(card);

@@ -28,6 +28,18 @@
 #define UX500_PLATFORM_PERIODS_MAX		48
 #define UX500_PLATFORM_BUFFER_BYTES_MAX		(2048 * PAGE_SIZE)
 
+static const struct snd_pcm_hardware ux500_pcm_hw = {
+	.info = SNDRV_PCM_INFO_INTERLEAVED |
+		SNDRV_PCM_INFO_MMAP |
+		SNDRV_PCM_INFO_RESUME |
+		SNDRV_PCM_INFO_PAUSE,
+	.buffer_bytes_max = UX500_PLATFORM_BUFFER_BYTES_MAX,
+	.period_bytes_min = UX500_PLATFORM_PERIODS_BYTES_MIN,
+	.period_bytes_max = UX500_PLATFORM_PERIODS_BYTES_MAX,
+	.periods_min = UX500_PLATFORM_PERIODS_MIN,
+	.periods_max = UX500_PLATFORM_PERIODS_MAX,
+};
+
 static int ux500_pcm_prepare_slave_config(struct snd_pcm_substream *substream,
 		struct snd_pcm_hw_params *params,
 		struct dma_slave_config *slave_config)
@@ -59,6 +71,8 @@ static int ux500_pcm_prepare_slave_config(struct snd_pcm_substream *substream,
 }
 
 static const struct snd_dmaengine_pcm_config ux500_dmaengine_of_pcm_config = {
+	.pcm_hardware = &ux500_pcm_hw, /* FIXME: from devicetree?? */
+	.prealloc_buffer_size = SZ_128K, /* FIXME: from devicetree ?? */
 	.prepare_slave_config = ux500_pcm_prepare_slave_config,
 };
 

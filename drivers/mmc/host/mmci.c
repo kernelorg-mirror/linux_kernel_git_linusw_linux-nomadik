@@ -37,6 +37,7 @@
 #include <linux/pinctrl/consumer.h>
 #include <linux/reset.h>
 #include <linux/gpio/consumer.h>
+#include <linux/workqueue.h>
 
 #include <asm/div64.h>
 #include <asm/io.h>
@@ -673,6 +674,56 @@ static void ux500_busy_clear_mask_done(struct mmci_host *host)
 	host->busy_status = 0;
 }
 
+static u64 ux500_stalled_idle = 0;
+static u64 ux500_lost_irq_start = 0;
+static u64 ux500_lost_irq_end = 0;
+static u64 ux500_successful_irq = 0;
+
+static void ux500_debug_work(struct work_struct *work)
+{
+        struct mmci_host *host =
+                container_of(work, struct mmci_host, debug_work.work);
+
+	dev_info(mmc_dev(host->mmc), "IRQ STATS:\n");
+	switch (host->busy_state) {
+	case MMCI_BUSY_IDLE:
+		dev_info(mmc_dev(host->mmc), "  STATE: MMCI_BUSY_IDLE\n");
+		break;
+	case MMCI_BUSY_WAITING_FOR_IRQS:
+		dev_info(mmc_dev(host->mmc), "  STATE: MMCI_BUSY_WAITING_FOR_IRQS\n");
+		break;
+	case MMCI_BUSY_START_IRQ:
+		dev_info(mmc_dev(host->mmc), "  STATE: MMCI_BUSY_START_IRQ\n");
+		break;
+	case MMCI_BUSY_DONE:
+		dev_info(mmc_dev(host->mmc), "  STATE: MMCI_BUSY_DONE\n");
+		break;
+	default:
+		break;
+	}
+	dev_info(mmc_dev(host->mmc), "  stalled idle: %llx\n", ux500_stalled_idle);
+	dev_info(mmc_dev(host->mmc), "  lost start IRQs: %llx\n", ux500_lost_irq_start);
+	dev_info(mmc_dev(host->mmc), "  lost end IRQs: %llx\n", ux500_lost_irq_end);
+	dev_info(mmc_dev(host->mmc), "  successful IRQs: %llx\n", ux500_successful_irq);
+
+	schedule_delayed_work(&host->debug_work,  msecs_to_jiffies(10000));
+}
+
+static void
+mmci_cmd_irq(struct mmci_host *host, struct mmc_command *cmd,
+	     unsigned int status);
+
+static void ux500_busy_timeout_work(struct work_struct *work)
+{
+        struct mmci_host *host =
+                container_of(work, struct mmci_host, busy_timeout_work.work);
+	u32 status;
+
+	dev_err(mmc_dev(host->mmc), "timeout waiting for end IRQ\n");
+	status = readl(host->base + MMCISTATUS);
+	mmci_cmd_irq(host, host->cmd, status);
+}
+
 /*
  * ux500_busy_complete() - this will wait until the busy status
  * goes off, saving any status that occur in the meantime into
@@ -723,6 +774,8 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 			retries--;
 		}
 		dev_dbg(mmc_dev(host->mmc), "no busy signalling in time\n");
+		if (host->phybase == 0x80005000)
+			ux500_stalled_idle++;
 		ux500_busy_clear_mask_done(host);
 		break;
 
@@ -742,10 +795,13 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 			host->busy_status |= status & (MCI_CMDSENT | MCI_CMDRESPEND);
 			writel(host->variant->busy_detect_mask, base + MMCICLEAR);
 			host->busy_state = MMCI_BUSY_START_IRQ;
+			schedule_delayed_work(&host->busy_timeout_work,  msecs_to_jiffies(10));
 		} else {
 			dev_dbg(mmc_dev(host->mmc),
 				"lost busy status when waiting for busy start IRQ\n");
 			ux500_busy_clear_mask_done(host);
+			if (host->phybase == 0x80005000)
+				ux500_lost_irq_start++;
 		}
 		break;
 
@@ -753,26 +809,15 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 		if (status & host->variant->busy_detect_flag) {
 			host->busy_status |= status & (MCI_CMDSENT | MCI_CMDRESPEND);
 			writel(host->variant->busy_detect_mask, base + MMCICLEAR);
-			host->busy_state = MMCI_BUSY_END_IRQ;
+			ux500_busy_clear_mask_done(host);
+			ux500_successful_irq++;
 		} else {
 			dev_dbg(mmc_dev(host->mmc),
 				"lost busy status when waiting for busy end IRQ\n");
 			ux500_busy_clear_mask_done(host);
+			if (host->phybase == 0x80005000)
+				ux500_lost_irq_end++;
 		}
-		break;
-
-	/*
-	 * If there is a command in-progress that has been successfully
-	 * sent and the busy bit isn't set, it means we have received
-	 * the busy end IRQ. Clear and mask the IRQ, then continue to
-	 * process the command.
-	 */
-	case MMCI_BUSY_END_IRQ:
-		if (status & host->variant->busy_detect_flag) {
-			/* We should just get two IRQs for busy detect */
-			dev_err(mmc_dev(host->mmc), "spurious busy detect IRQ\n");
-		}
-		ux500_busy_clear_mask_done(host);
 		break;
 
 	case MMCI_BUSY_DONE:
@@ -2339,6 +2384,13 @@ static int mmci_probe(struct amba_device *dev,
 	ret = mmc_add_host(mmc);
 	if (ret)
 		goto clk_disable;
+
+	/* TODO: init just for ux500? */
+	INIT_DELAYED_WORK(&host->busy_timeout_work, ux500_busy_timeout_work);
+	if (host->phybase == 0x80005000) {
+		INIT_DELAYED_WORK(&host->debug_work, ux500_debug_work);
+		schedule_delayed_work(&host->debug_work,  msecs_to_jiffies(10000));
+	}
 
 	pm_runtime_put(&dev->dev);
 	return 0;

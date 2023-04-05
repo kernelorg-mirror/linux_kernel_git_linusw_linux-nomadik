@@ -758,26 +758,12 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 		if (status & host->variant->busy_detect_flag) {
 			host->busy_status |= status & (MCI_CMDSENT | MCI_CMDRESPEND);
 			writel(host->variant->busy_detect_mask, base + MMCICLEAR);
-			host->busy_state = MMCI_BUSY_END_IRQ;
+			ux500_busy_clear_mask_done(host);
 		} else {
 			dev_dbg(mmc_dev(host->mmc),
 				"lost busy status when waiting for busy end IRQ\n");
 			ux500_busy_clear_mask_done(host);
 		}
-		break;
-
-	/*
-	 * If there is a command in-progress that has been successfully
-	 * sent and the busy bit isn't set, it means we have received
-	 * the busy end IRQ. Clear and mask the IRQ, then continue to
-	 * process the command.
-	 */
-	case MMCI_BUSY_END_IRQ:
-		if (status & host->variant->busy_detect_flag) {
-			/* We should just get two IRQs for busy detect */
-			dev_err(mmc_dev(host->mmc), "spurious busy detect IRQ\n");
-		}
-		ux500_busy_clear_mask_done(host);
 		break;
 
 	case MMCI_BUSY_DONE:

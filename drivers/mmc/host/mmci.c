@@ -37,6 +37,7 @@
 #include <linux/pinctrl/consumer.h>
 #include <linux/reset.h>
 #include <linux/gpio/consumer.h>
+#include <linux/workqueue.h>
 
 #include <asm/div64.h>
 #include <asm/io.h>
@@ -672,7 +673,8 @@ static void ux500_busy_clear_mask_done(struct mmci_host *host)
  * The function returns true when the busy detection is ended
  * and we should continue processing the command.
  */
-static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
+static bool ux500_busy_complete(struct mmci_host *host, struct mmc_command *cmd,
+				u32 status, u32 err_msk)
 {
 	void __iomem *base = host->base;
 	int retries = 10;
@@ -716,6 +718,8 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 				       host->variant->busy_detect_mask,
 				       base + MMCIMASK0);
 				host->busy_state = MMCI_BUSY_WAITING_FOR_START_IRQ;
+				schedule_delayed_work(&host->ux500_busy_timeout_work,
+				      msecs_to_jiffies(cmd->busy_timeout));
 				goto out_ret_state;
 			}
 			retries--;
@@ -751,6 +755,7 @@ static bool ux500_busy_complete(struct mmci_host *host, u32 status, u32 err_msk)
 		if (status & host->variant->busy_detect_flag) {
 			host->busy_status |= status & (MCI_CMDSENT | MCI_CMDRESPEND);
 			writel(host->variant->busy_detect_mask, base + MMCICLEAR);
+			cancel_delayed_work_sync(&host->ux500_busy_timeout_work);
 			ux500_busy_clear_mask_done(host);
 		} else {
 			dev_dbg(mmc_dev(host->mmc),
@@ -1295,10 +1300,11 @@ mmci_start_command(struct mmci_host *host, struct mmc_command *cmd, u32 c)
 	host->busy_status = 0;
 	host->busy_state = MMCI_BUSY_DONE;
 
-	if (host->variant->busy_timeout && cmd->flags & MMC_RSP_BUSY) {
-		if (!cmd->busy_timeout)
-			cmd->busy_timeout = 10 * MSEC_PER_SEC;
+	/* Assign a default timeout if the core does not provide one */
+	if (!cmd->busy_timeout)
+		cmd->busy_timeout = 10 * MSEC_PER_SEC;
 
+	if (host->variant->busy_timeout && cmd->flags & MMC_RSP_BUSY) {
 		if (cmd->busy_timeout > host->mmc->max_busy_timeout)
 			clks = (unsigned long long)host->mmc->max_busy_timeout * host->cclk;
 		else
@@ -1439,7 +1445,7 @@ mmci_cmd_irq(struct mmci_host *host, struct mmc_command *cmd,
 
 	/* Handle busy detection on DAT0 if the variant supports it. */
 	if (busy_resp && host->variant->busy_detect)
-		if (!host->ops->busy_complete(host, status, err_msk))
+		if (!host->ops->busy_complete(host, cmd, status, err_msk))
 			return;
 
 	host->cmd = NULL;
@@ -1484,6 +1490,22 @@ mmci_cmd_irq(struct mmci_host *host, struct mmc_command *cmd,
 		   !(cmd->data->flags & MMC_DATA_READ)) {
 		mmci_start_data(host, cmd->data);
 	}
+}
+
+/*
+ * This busy timeout worker is used to "kick" the command IRQ if a
+ * busy detect IRQ fails to appear in reasonable time. Only used on
+ * variants with busy detection IRQ delivery.
+ */
+static void ux500_busy_timeout_work(struct work_struct *work)
+{
+	struct mmci_host *host =
+		container_of(work, struct mmci_host, ux500_busy_timeout_work.work);
+	u32 status;
+
+	dev_dbg(mmc_dev(host->mmc), "timeout waiting for busy IRQ\n");
+	status = readl(host->base + MMCISTATUS);
+	mmci_cmd_irq(host, host->cmd, status);
 }
 
 static int mmci_get_rx_fifocnt(struct mmci_host *host, u32 status, int remain)
@@ -2298,6 +2320,10 @@ static int mmci_probe(struct amba_device *dev,
 		if (ret)
 			goto clk_disable;
 	}
+
+	if (host->variant->busy_detect)
+		INIT_DELAYED_WORK(&host->ux500_busy_timeout_work,
+				  ux500_busy_timeout_work);
 
 	writel(MCI_IRQENABLE | variant->start_err, host->base + MMCIMASK0);
 

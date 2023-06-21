@@ -453,6 +453,7 @@
 			vmmc-supply = <&ldo_3v3_reg>;
 			vqmmc-supply = <&db8500_vsmps2_reg>;
 			pinctrl-names = "default", "sleep";
+			cardreset-gpios = <&gpio4 2 GPIO_ACTIVE_LOW>; // GPIO130
 			/*
 			 * This muxing excludes the feedback clock on GPIO130
 			 * which is instead used for reset of the eMMC.

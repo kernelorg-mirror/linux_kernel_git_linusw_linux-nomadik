@@ -2209,6 +2209,7 @@ static int mmci_probe(struct amba_device *dev,
 	struct variant_data *variant = id->data;
 	struct mmci_host *host;
 	struct mmc_host *mmc;
+	struct gpio_desc *cardreset;
 	int ret;
 
 	/* Must have platform data or Device Tree. */
@@ -2467,6 +2468,15 @@ static int mmci_probe(struct amba_device *dev,
 	if (host->variant->busy_detect)
 		INIT_DELAYED_WORK(&host->ux500_busy_timeout_work,
 				  ux500_busy_timeout_work);
+
+	cardreset = devm_gpiod_get(&dev->dev, "cardreset", GPIOD_OUT_LOW);
+	if (cardreset) {
+		dev_info(&dev->dev, "resetting card\n");
+		gpiod_set_value(cardreset, 1);
+		msleep(1);
+		gpiod_set_value(cardreset, 0);
+		msleep(1);
+	}
 
 	writel(MCI_IRQENABLE | variant->start_err, host->base + MMCIMASK0);
 

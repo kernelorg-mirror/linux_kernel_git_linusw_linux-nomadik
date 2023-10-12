@@ -3676,7 +3676,21 @@ static int mv88e6xxx_mdios_register(struct mv88e6xxx_chip *chip)
 	if (err)
 		return err;
 
-	/* Walk the device tree, and see if there are any other nodes
+	/* If the optional external bus is explicitly named as such,
+	 * just register it and be done with this.
+	 */
+	child = of_get_child_by_name(np, "mdio-external");
+	if (child) {
+		err = mv88e6xxx_mdio_register(chip, child, true);
+		of_node_put(child);
+		if (err)
+			return err;
+		return 0;
+	}
+
+	/* Deprecated binding with compatible:
+	 *
+	 * Walk the device tree, and see if there are any other nodes
 	 * which say they are compatible with the external mdio
 	 * bus.
 	 */

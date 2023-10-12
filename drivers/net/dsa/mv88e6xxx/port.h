@@ -294,6 +294,114 @@
 /* Offset 0x13: OutFiltered Counter */
 #define MV88E6XXX_PORT_OUT_FILTERED	0x13
 
+/* Offset 0x16: LED Control */
+#define MV88E6XXX_PORT_LED_CONTROL				0x16
+#define MV88E6XXX_PORT_LED_CONTROL_UPDATE			BIT(15)
+#define MV88E6XXX_PORT_LED_CONTROL_POINTER_MASK			GENMASK(14, 12)
+#define MV88E6XXX_PORT_LED_CONTROL_POINTER_SHIFT		12
+#define MV88E6XXX_PORT_LED_CONTROL_POINTER_LED01_CTRL		0x00
+/* Control for LED 0 and 1 */
+#define MV88E6XXX_PORT_LED_CONTROL_POINTER_STRETCH_BLINK	0x06
+/* Stetch and Blink Rate */
+#define MV88E6XXX_PORT_LED_CONTROL_POINTER_CNTL_SPECIAL		0x07 /* Control for the Port's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_DATA_MASK			GENMASK(10, 0)
+/* Control for LED 0 and 1 (Index 0x00 of LED Control for Ports 0 to 4) */
+/* Select LED1 output */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL_SHIFT		4
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL0		0x0 /* Port 2's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL1		0x1 /* 10/100 Link Act (off=no link, on=10 or 100 link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL2		0x2 /* 10/100 Link/Act (off=no link, on=10 or 100 link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL3		0x3 /* Gig Link (off=no link, on=Gig link) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL4		0x4 /* Port 1's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL5		0x5 /* Reserved */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL6		0x6 /* 10/Gig Link/Act (off=no link, on=10 or Gig link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL7		0x7 /* 10/Gig Link (off=no link, on=10 or Gig link) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL8		0x8 /* Activity (off=no link, blink on=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SEL9		0x9 /* 100 Link (off=no link, on=100 link)*/
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SELA		0xa /* 100 Link/Act (off=no link, on=100 link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SELB		0xb /* 10/100 Link (off=no link, on=100 link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SELC		0xc /* PTP Act (blink on=PTP activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SELD		0xd /* Force Blink */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SELE		0xe /* Force Off */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P1234_SELF		0xf /* Force On */
+/* Select LED0 output */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL_SHIFT		0
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL0		0x0 /* Link/Act/Speed by Blink Rate (off=no link, on=link, blink=activity, blink speed=link speed) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL1		0x1 /* 100/Gig Link/Act (off=no link, on=100 or Gig link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL2		0x2 /* Gig Link/Act (off=no link, on=Gig link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL3		0x3 /* Link/Act (off=no link, on=link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL4		0x4 /* Port 0's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL5		0x5 /* reserved */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL6		0x6 /* Duplex/Collision (off=half-duplex,on=full-duplex,blink=collision) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL7		0x7 /* 10/Gig Link/Act (off=no link, on=10 or Gig link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL8		0x8 /* Link (off=no link, on=link) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SEL9		0x9 /* 10 Link (off=no link, on=10 link) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SELA		0xa /* 10 Link/Act (off=no link, on=10 link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SELB		0xb /* 100/Gig Link (off=no link, on=100 or Gig link) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SELC		0xc /* PTP Act (blink on=PTP activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SELD		0xd /* Force Blink */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SELE		0xe /* Force Off */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P1234_SELF		0xf /* Force On */
+/* Control for LED 0 & 1 (Index 0x00 of LED Control for Port 5) */
+/* Select LED1 output */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL_SHIFT		4
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL0			0x0 /* Port 6 Link/Act (off=no link, on=link 1000, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL1			0x1 /* Fiber 1000 Link/Act (off=no link, on=link 1000, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL2			0x2 /* Fiber 100 Link/Act (off=no link, on=link 100, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL3			0x3 /* Fiber Link (off=no link, on=link) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL4			0x4 /* Port 5 Link/Act (off=no link, on=link, blink=ativity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL5			0x5 /* Port 6 Link (off=no link, on=link) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL6			0x6 /* Port 6 Duplex/Collision (off=half-duplex, on=full-duplex, blink=col) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL7			0x7 /* Port 6 Link/Act/Speed by Blink rate (off=no link, on=link, blink=activity,  blink speed=link speed) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL8			0x8 /* Port 0's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SEL9			0x9 /* Port 1's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SELA			0xa /* Port 2's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SELB			0xb /* reserved */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SELC			0xc /* Port 6 PTP Act (blink on=PTP activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SELD			0xd /* Force Blink*/
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SELE			0xe /* Force On */
+#define MV88E6XXX_PORT_LED_CONTROL_LED1_P5_SELF			0xf /* Force Off */
+/* Select LED 0 output */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL_SHIFT		0
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL0			0x0 /* Port 5 Link/Act (off=no link, on=link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL1			0x1 /* Fiber 100 Link/Act (off=no link, on=link 100, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL2			0x2 /* Fiber 1000 Link/Act (off=no link, on=link 1000, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL3			0x3 /* Port 0's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL4			0x4 /* Port 1's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL5			0x5 /* Port 2's Special LED */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL6			0x6 /* Port 5 Duplex/Collision (off=half-duplex, on=full-duplex, blink=col) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL7			0x7 /* Port 5 Link/Act/Speed by Blink rate (off=no link, on=link, blink=activity, blink seed=link speed) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL8			0x8 /* Port 6 Link/Act (off=no link, on=link, blink=activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SEL9			0x9 /* reserved */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SELA			0xa /* reserved */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SELB			0xb /* reserved */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SELC			0xc /* Port 5 PTP Act (blink on=PTP activity) */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SELD			0xd /* Force Blink */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SELE			0xe /* Force Off */
+#define MV88E6XXX_PORT_LED_CONTROL_LED0_P5_SELF			0xf /* Force On */
+/* Stretch and Blink Rate Control (Index 0x06 of LED Control) */
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_PULSE_STRETCH_SHIFT	4
+/* Pulse Stretch Selection for all LED's on this port */
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_PULSE_STRETCH_NONE	0
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_PULSE_STRETCH_21MS	1
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_PULSE_STRETCH_42MS	2
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_PULSE_STRETCH_84MS	3
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_PULSE_STRETCH_168MS	4
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_BLINK_RATE_SHIFT	0
+/* Blink Rate Selection for all LEDs on this port */
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_BLINK_RATE_21MS		0
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_BLINK_RATE_42MS		1
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_BLINK_RATE_84MS		2
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_BLINK_RATE_168MS	3
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_BLINK_RATE_336MS	4
+#define MV88E6XXX_PORT_LED_CONTROL_0x06_BLINK_RATE_672MS	5
+ /* Control for Special LED (Index 0x7 of LED Control on Port0) */
+#define MV88E6XXX_PORT_LED_CONTROL_0x07_P0_LAN_LINKACT_SHIFT	0 /* bits 6:0 LAN Link Activity LED */
+/* Control for Special LED (Index 0x7 of LED Control on Port 1) */
+#define MV88E6XXX_PORT_LED_CONTROL_0x07_P1_WAN_LINKACT_SHIFT	0 /* bits 6:0 WAN Link Activity LED */
+/* Control for Special LED (Index 0x7 of LED Control on Port 2) */
+#define MV88E6XXX_PORT_LED_CONTROL_0x07_P2_PTP_ACT		0 /* bits 6:0 PTP Activity */
+
 /* Offset 0x18: IEEE Priority Mapping Table */
 #define MV88E6390_PORT_IEEE_PRIO_MAP_TABLE			0x18
 #define MV88E6390_PORT_IEEE_PRIO_MAP_TABLE_UPDATE		0x8000

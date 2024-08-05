@@ -35,7 +35,13 @@
 #define ZINITIX_DEBUG_REG			0x0115 /* 0~7 */
 
 #define ZINITIX_TOUCH_MODE			0x0010
+
 #define ZINITIX_CHIP_REVISION			0x0011
+#define ZINITIX_CHIP_BTX0X_MASK			0xF0F0
+#define ZINITIX_CHIP_BT4X2			0x4020
+#define ZINITIX_CHIP_BT4X3			0x4030
+#define ZINITIX_CHIP_BT4X4			0x4040
+
 #define ZINITIX_FIRMWARE_VERSION		0x0012
 
 #define ZINITIX_USB_DETECT			0x116
@@ -63,7 +69,11 @@
 #define ZINITIX_Y_RESOLUTION			0x00C1
 
 #define ZINITIX_POINT_STATUS_REG		0x0080
-#define ZINITIX_ICON_STATUS_REG			0x00AA
+
+#define ZINITIX_BT4X2_ICON_STATUS_REG		0x009A
+#define ZINITIX_BT4X3_ICON_STATUS_REG		0x00A0
+#define ZINITIX_BT4X4_ICON_STATUS_REG		0x00A0
+#define ZINITIX_BT5XX_ICON_STATUS_REG		0x00AA
 
 #define ZINITIX_POINT_COORD_REG			(ZINITIX_POINT_STATUS_REG + 2)
 
@@ -425,7 +435,18 @@ static irqreturn_t zinitix_ts_irq_handler(int irq, void *bt541_handler)
 	}
 
 	if (le16_to_cpu(touch_event.status) & BIT_ICON_EVENT) {
-		error = zinitix_read_data(bt541->client, ZINITIX_ICON_STATUS_REG,
+		u16 iconstatus;
+
+		if ((bt541->chip_revision & ZINITIX_CHIP_BTX0X_MASK) == ZINITIX_CHIP_BT4X2)
+			iconstatus = ZINITIX_BT4X2_ICON_STATUS_REG;
+		else if ((bt541->chip_revision & ZINITIX_CHIP_BTX0X_MASK) == ZINITIX_CHIP_BT4X3)
+			iconstatus = ZINITIX_BT4X3_ICON_STATUS_REG;
+		else if ((bt541->chip_revision & ZINITIX_CHIP_BTX0X_MASK) == ZINITIX_CHIP_BT4X4)
+			iconstatus = ZINITIX_BT4X4_ICON_STATUS_REG;
+		else
+			iconstatus = ZINITIX_BT5XX_ICON_STATUS_REG;
+
+		error = zinitix_read_data(bt541->client, iconstatus,
 					  &icon_events, sizeof(icon_events));
 		if (error) {
 			dev_err(&client->dev, "Failed to read icon events\n");

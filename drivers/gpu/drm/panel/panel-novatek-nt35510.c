@@ -862,7 +862,6 @@ static const struct backlight_ops nt35510_bl_ops = {
  */
 static int nt35510_power_on(struct nt35510 *nt)
 {
-	struct mipi_dsi_device *dsi = to_mipi_dsi_device(nt->dev);
 	int ret;
 
 	ret = regulator_bulk_enable(ARRAY_SIZE(nt->supplies), nt->supplies);
@@ -883,6 +882,14 @@ static int nt35510_power_on(struct nt35510 *nt)
 		 */
 		usleep_range(120000, 140000);
 	}
+
+	return 0;
+}
+
+static int nt35510_init(struct nt35510 *nt)
+{
+	struct mipi_dsi_device *dsi = to_mipi_dsi_device(nt->dev);
+	int ret;
 
 	ret = nt35510_send_long(nt, dsi, MCS_CMD_MTP_READ_PARAM,
 				ARRAY_SIZE(nt35510_mauc_mtp_read_param),
@@ -973,6 +980,13 @@ static int nt35510_power_off(struct nt35510 *nt)
 static int nt35510_unprepare(struct drm_panel *panel)
 {
 	struct nt35510 *nt = panel_to_nt35510(panel);
+
+	return nt35510_power_off(nt);
+}
+
+static int nt35510_disable(struct drm_panel *panel)
+{
+	struct nt35510 *nt = panel_to_nt35510(panel);
 	struct mipi_dsi_device *dsi = to_mipi_dsi_device(nt->dev);
 	int ret;
 
@@ -993,20 +1007,23 @@ static int nt35510_unprepare(struct drm_panel *panel)
 	/* Wait 4 frames, how much is that 5ms in the vendor driver */
 	usleep_range(5000, 10000);
 
-	ret = nt35510_power_off(nt);
-	if (ret)
-		return ret;
-
 	return 0;
 }
 
 static int nt35510_prepare(struct drm_panel *panel)
 {
 	struct nt35510 *nt = panel_to_nt35510(panel);
+
+	return nt35510_power_on(nt);
+}
+
+static int nt35510_enable(struct drm_panel *panel)
+{
+	struct nt35510 *nt = panel_to_nt35510(panel);
 	struct mipi_dsi_device *dsi = to_mipi_dsi_device(nt->dev);
 	int ret;
 
-	ret = nt35510_power_on(nt);
+	ret = nt35510_init(nt);
 	if (ret)
 		return ret;
 
@@ -1078,6 +1095,8 @@ static int nt35510_get_modes(struct drm_panel *panel,
 static const struct drm_panel_funcs nt35510_drm_funcs = {
 	.unprepare = nt35510_unprepare,
 	.prepare = nt35510_prepare,
+	.disable = nt35510_disable,
+	.enable = nt35510_enable,
 	.get_modes = nt35510_get_modes,
 };
 

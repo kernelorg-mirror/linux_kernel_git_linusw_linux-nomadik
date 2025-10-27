@@ -59,6 +59,7 @@ enum bmc150_accel_trigger_id {
 struct bmc150_accel_data {
 	struct regmap *regmap;
 	struct regulator_bulk_data regulators[2];
+	bool has_irq;
 	struct bmc150_accel_interrupt interrupts[BMC150_ACCEL_INTERRUPTS];
 	struct bmc150_accel_trigger triggers[BMC150_ACCEL_TRIGGERS];
 	struct mutex mutex;

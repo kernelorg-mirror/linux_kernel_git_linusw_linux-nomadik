@@ -450,6 +450,8 @@ static int isa1200_probe(struct i2c_client *client)
 	if (ret)
 		return dev_err_probe(dev, ret, "couldn't register input dev\n");
 
+	dev_info(dev, "ISA1200 haptics ready\n");
+
 	return ret;
 }
 

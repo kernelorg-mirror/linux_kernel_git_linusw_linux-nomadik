@@ -72,6 +72,9 @@ properties:
           main voltage domain for the chip.
         type: object
         $ref: /schemas/regulator/regulator.yaml#
+        properties:
+          power-domains:
+            maxItems: 1
         unevaluatedProperties: false
 
       db8500_varm:
@@ -104,6 +107,9 @@ properties:
           for 1.8V I/O. SMPS means System Management Power Source.
         type: object
         $ref: /schemas/regulator/regulator.yaml#
+        properties:
+          power-domains:
+            maxItems: 1
         unevaluatedProperties: false
 
       db8500_vsmps3:
@@ -208,25 +214,7 @@ properties:
     required:
       - compatible
       - db8500_vape
-      - db8500_varm
-      - db8500_vmodem
-      - db8500_vpll
-      - db8500_vsmps1
       - db8500_vsmps2
-      - db8500_vsmps3
-      - db8500_vrf1
-      - db8500_sva_mmdsp
-      - db8500_sva_mmdsp_ret
-      - db8500_sva_pipe
-      - db8500_sia_mmdsp
-      - db8500_sia_mmdsp_ret
-      - db8500_sia_pipe
-      - db8500_sga
-      - db8500_b2r2_mcde
-      - db8500_esram12
-      - db8500_esram12_ret
-      - db8500_esram34
-      - db8500_esram34_ret
 
     additionalProperties: false
 

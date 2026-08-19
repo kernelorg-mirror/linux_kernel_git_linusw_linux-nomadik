@@ -68,6 +68,8 @@ properties:
 
   power-domains:
     maxItems: 1
+    description:
+      Power domain controlling the cache controller.
 
   arm,data-latency:
     description: Cycles of latency for Data RAM accesses. Specifies 3 cells of

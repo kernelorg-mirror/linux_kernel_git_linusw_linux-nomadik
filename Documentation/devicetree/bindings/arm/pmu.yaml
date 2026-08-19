@@ -88,6 +88,9 @@ properties:
     # Don't know how many CPUs, so no constraints to specify
     description: 1 per-cpu interrupt (PPI) or 1 interrupt per core.
 
+  power-domains:
+    maxItems: 1
+
   interrupt-affinity:
     $ref: /schemas/types.yaml#/definitions/phandle-array
     items:

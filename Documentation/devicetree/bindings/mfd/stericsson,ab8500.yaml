@@ -439,10 +439,110 @@ properties:
         $ref: /schemas/regulator/regulator.yaml#
         unevaluatedProperties: false
 
+    allOf:
+      - if:
+          properties:
+            compatible:
+              const: stericsson,ab8500-regulator
+        then:
+          properties:
+            ab8500_buck_smps1:
+              description: Analog buck converter for the VSMPS1 1.2V I/O
+                and memory supply.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8500_buck_smps2:
+              description: Analog buck converter for the VSMPS2 1.8V I/O
+                and memory supply.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8500_buck_smps3:
+              description: Analog buck converter for VSMPS3, which supplies
+                the VSAFE power domain.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8500_buck_arm:
+              description: Analog buck converter for the VARM processor
+                supply.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8500_buck_ape:
+              description: Analog buck converter for the VAPE application
+                processor supply.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8500_buck_mod:
+              description: Analog buck converter for the VMOD modem supply.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+      - if:
+          properties:
+            compatible:
+              const: stericsson,ab8505-regulator
+        then:
+          properties:
+            ab8505_buck_smpsa:
+              description: Analog buck converter for the VSMPSA 1.2V I/O
+                and memory supply. The selector range depends on OTP
+                configuration.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8505_buck_smpsb:
+              description: Analog buck converter for the VSMPSB 1.8V I/O
+                and memory supply. The selector range depends on OTP
+                configuration.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8505_buck_safe:
+              description: Analog buck converter for the VSAFE permanent
+                logic and DDR supply. The selector range depends on OTP
+                configuration.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8505_buck_arm:
+              description: Analog buck converter for the VARM processor
+                supply, with a 0.6V to 1.39375V selector range.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8505_buck_smpsc:
+              description: Analog buck converter for the VSMPSC multimedia
+                and graphics supply. The selector range depends on OTP
+                configuration.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
+            ab8505_buck_smpsm:
+              description: Analog buck converter for the VSMPSM modem
+                supply. The selector range depends on OTP configuration.
+              type: object
+              $ref: /schemas/regulator/regulator.yaml#
+              unevaluatedProperties: false
+
     required:
       - compatible
 
-    additionalProperties: false
+    unevaluatedProperties: false
 
   regulator-external:
     description: Node describing the AB8500 external regulators. This

@@ -378,6 +378,9 @@ struct d40_lli_pool {
  * @lli_len: Number of llis of current descriptor.
  * @lli_current: Number of transferred llis.
  * @lcla_alloc: Number of LCLA entries allocated.
+ * @cyclic_buf_len: Length of the cyclic buffer.
+ * @cyclic_period_len: Length of one cyclic period.
+ * @cyclic_pos: Start of the current cyclic period in the buffer.
  * @txd: DMA engine struct. Used for among other things for communication
  * during a transfer.
  * @node: List entry.
@@ -396,6 +399,9 @@ struct d40_desc {
 	int				 lli_len;
 	int				 lli_current;
 	int				 lcla_alloc;
+	size_t				 cyclic_buf_len;
+	size_t				 cyclic_period_len;
+	size_t				 cyclic_pos;
 
 	struct dma_async_tx_descriptor	 txd;
 	struct list_head		 node;
@@ -1566,6 +1572,12 @@ static void dma_tc_handle(struct d40_chan *d40c)
 			if (d40d->lli_current == d40d->lli_len)
 				d40d->lli_current = 0;
 		}
+
+		if (d40d->cyclic_period_len) {
+			d40d->cyclic_pos += d40d->cyclic_period_len;
+			if (d40d->cyclic_pos >= d40d->cyclic_buf_len)
+				d40d->cyclic_pos = 0;
+		}
 	} else {
 		d40_lcla_free_all(d40c, d40d);
 
@@ -2108,15 +2120,27 @@ static bool d40_is_paused(struct d40_chan *d40c)
 
 }
 
-static u32 stedma40_residue(struct dma_chan *chan)
+static u32 stedma40_residue(struct dma_chan *chan, dma_cookie_t cookie)
 {
 	struct d40_chan *d40c =
 		container_of(chan, struct d40_chan, chan);
+	struct d40_desc *d40d;
 	u32 bytes_left;
 	unsigned long flags;
 
 	spin_lock_irqsave(&d40c->lock, flags);
 	bytes_left = d40_residue(d40c);
+
+	d40d = d40_first_active_get(d40c);
+	/*
+	 * The hardware residue is for the current LLI. Cyclic transfers use
+	 * one LLI for each period, so include the later periods in the buffer.
+	 */
+	if (d40d && d40d->txd.cookie == cookie && d40d->cyclic &&
+	    d40d->cyclic_period_len)
+		bytes_left += d40d->cyclic_buf_len - d40d->cyclic_pos -
+			      d40d->cyclic_period_len;
+
 	spin_unlock_irqrestore(&d40c->lock, flags);
 
 	return bytes_left;
@@ -2524,10 +2548,16 @@ dma40_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t dma_addr,
 		     size_t buf_len, size_t period_len,
 		     enum dma_transfer_direction direction, unsigned long flags)
 {
-	unsigned int periods = buf_len / period_len;
+	unsigned int periods;
 	struct dma_async_tx_descriptor *txd;
+	struct d40_desc *desc;
 	struct scatterlist *sg;
 	int i;
+
+	if (!buf_len || !period_len || buf_len % period_len)
+		return NULL;
+
+	periods = buf_len / period_len;
 
 	sg = kzalloc_objs(struct scatterlist, periods + 1, GFP_NOWAIT);
 	if (!sg)
@@ -2543,6 +2573,12 @@ dma40_prep_dma_cyclic(struct dma_chan *chan, dma_addr_t dma_addr,
 
 	txd = d40_prep_sg(chan, sg, sg, periods, direction,
 			  DMA_PREP_INTERRUPT);
+	if (txd) {
+		desc = container_of(txd, struct d40_desc, txd);
+		desc->cyclic_buf_len = buf_len;
+		desc->cyclic_period_len = period_len;
+		desc->cyclic_pos = 0;
+	}
 
 	kfree(sg);
 
@@ -2563,7 +2599,7 @@ static enum dma_status d40_tx_status(struct dma_chan *chan,
 
 	ret = dma_cookie_status(chan, cookie, txstate);
 	if (ret != DMA_COMPLETE && txstate)
-		dma_set_residue(txstate, stedma40_residue(chan));
+		dma_set_residue(txstate, stedma40_residue(chan, cookie));
 
 	if (d40_is_paused(d40c))
 		ret = DMA_PAUSED;

@@ -1690,6 +1690,7 @@ static void dma_tasklet(struct tasklet_struct *t)
 
 static irqreturn_t d40_handle_interrupt(int irq, void *data)
 {
+	irqreturn_t handled = IRQ_NONE;
 	int i;
 	u32 idx;
 	u32 row;
@@ -1738,6 +1739,7 @@ static irqreturn_t d40_handle_interrupt(int irq, void *data)
 
 		/* ACK interrupt */
 		writel(BIT(idx), base->virtbase + il[row].clr);
+		handled = IRQ_HANDLED;
 
 		spin_lock(&d40c->lock);
 
@@ -1755,7 +1757,7 @@ static irqreturn_t d40_handle_interrupt(int irq, void *data)
 	if (ret > 0)
 		pm_runtime_put_autosuspend(base->dev);
 
-	return IRQ_HANDLED;
+	return handled;
 }
 
 static int d40_validate_conf(struct d40_chan *d40c,

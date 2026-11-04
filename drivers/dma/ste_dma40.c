@@ -1166,14 +1166,6 @@ static void d40_term_all(struct d40_chan *d40c)
 			d40_desc_free(d40c, d40d);
 		}
 
-	/* Release descriptors in prepare queue */
-	if (!list_empty(&d40c->prepare_queue))
-		list_for_each_entry_safe(d40d, _d,
-					 &d40c->prepare_queue, node) {
-			d40_desc_remove(d40d);
-			d40_desc_free(d40c, d40d);
-		}
-
 	d40c->pending_tx = 0;
 }
 
@@ -2222,7 +2214,8 @@ static int d40_config_memcpy(struct d40_chan *d40c)
 
 static int d40_free_dma(struct d40_chan *d40c)
 {
-
+	struct d40_desc *d40d;
+	struct d40_desc *_d;
 	int res = 0;
 	u32 event = D40_TYPE_TO_EVENT(d40c->dma_cfg.dev_type);
 	struct d40_phy_res *phy = d40c->phy_chan;
@@ -2251,6 +2244,12 @@ static int d40_free_dma(struct d40_chan *d40c)
 
 	/* Release descriptor state; this does not access DMA40 registers. */
 	d40_term_all(d40c);
+
+	/* Release any prepared descriptors the client did not submit. */
+	list_for_each_entry_safe(d40d, _d, &d40c->prepare_queue, node) {
+		d40_desc_remove(d40d);
+		d40_desc_free(d40c, d40d);
+	}
 
 	res = pm_runtime_resume_and_get(d40c->base->dev);
 	if (res >= 0) {
@@ -2508,10 +2507,7 @@ d40_prep_sg(struct dma_chan *dchan, struct scatterlist *sg_src,
 		goto free_desc;
 	}
 
-	/*
-	 * add descriptor to the prepare queue in order to be able
-	 * to free them later in terminate_all
-	 */
+	/* Track prepared descriptors until submission or channel release. */
 	list_add_tail(&desc->node, &chan->prepare_queue);
 
 	spin_unlock_irqrestore(&chan->lock, flags);

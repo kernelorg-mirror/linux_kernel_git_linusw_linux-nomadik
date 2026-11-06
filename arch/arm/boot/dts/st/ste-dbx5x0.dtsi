@@ -340,7 +340,7 @@
 			reg = <0x80150000 0x2000>;
 		};
 
-		L2: cache-controller {
+		L2: cache-controller@a0412000 {
 			compatible = "arm,pl310-cache";
 			reg = <0xa0412000 0x1000>;
 			interrupts = <GIC_SPI 13 IRQ_TYPE_LEVEL_HIGH>;
@@ -371,7 +371,7 @@
 						 <DOMAIN_B2R2_MCDE>;
 		};
 
-		clocks {
+		clocks@8012f000 {
 			compatible = "stericsson,u8500-clks";
 			/*
 			 * Registers for the CLKRST block on peripheral
@@ -637,7 +637,7 @@
 			clocks = <&prcc_pclk 5 0>;
 		};
 
-		dma: dma-controller@801C0000 {
+		dma: dma-controller@801c0000 {
 			compatible = "stericsson,db8500-dma40", "stericsson,dma40";
 			reg = <0x801C0000 0x1000>;
 			reg-names = "base";

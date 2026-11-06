@@ -128,7 +128,7 @@
 			stmpe {
 				stmpe_stuib_mode: stmpe_stuib {
 					stuib_cfg {
-						ste,pins = "GPIO218_AH11";
+						pins = "GPIO218_AH11";
 						ste,config = <&gpio_in_pu>;
 					};
 				};

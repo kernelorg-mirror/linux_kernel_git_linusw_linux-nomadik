@@ -61,21 +61,7 @@ properties:
         const: 1
 
   gpio:
-    description: Node describing the AB8500 GPIO controller. A few
-      GPIO pins available for misc usage.
-    type: object
-    additionalProperties: false
-
-    properties:
-      compatible:
-        enum:
-          - stericsson,ab8500-gpio
-          - stericsson,ab8505-gpio
-
-      gpio-controller: true
-
-      '#gpio-cells':
-        const: 2
+    $ref: /schemas/pinctrl/stericsson,abx500.yaml#
 
   rtc:
     description: Node describing the AB8500 battery-backed RTC.

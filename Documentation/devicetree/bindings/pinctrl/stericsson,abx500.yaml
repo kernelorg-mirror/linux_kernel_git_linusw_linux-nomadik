@@ -1,0 +1,68 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/pinctrl/stericsson,abx500.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: ST-Ericsson AB8500 and AB8505 GPIO and pin controller
+
+maintainers:
+  - Linus Walleij <linusw@kernel.org>
+
+properties:
+  compatible:
+    enum:
+      - stericsson,ab8500-gpio
+      - stericsson,ab8505-gpio
+
+  gpio-controller: true
+
+  '#gpio-cells':
+    const: 2
+
+  gpio-line-names:
+    minItems: 1
+    maxItems: 53
+
+patternProperties:
+  '^(?!phandle$|compatible$|gpio-controller$|gpio-line-names$|pinctrl-[0-9]+$|pinctrl-names$)[a-zA-Z0-9_-]+$':
+    $ref: '#/$defs/config-node'
+
+required:
+  - compatible
+  - gpio-controller
+  - '#gpio-cells'
+
+additionalProperties: false
+
+$defs:
+  config-node:
+    type: object
+    allOf:
+      - $ref: pincfg-node.yaml#
+      - $ref: pinmux-node.yaml#
+    patternProperties:
+      '^(?!phandle$|pins$|groups$|function$|bias-.*$|drive-.*$|input-.*$|output-.*$|power-source$|slew-rate$|low-power-.*$|persist-state$|skew-delay$)[a-zA-Z0-9_-]+$':
+        $ref: '#/$defs/config-node'
+    unevaluatedProperties: false
+
+examples:
+  - |
+    gpio {
+        compatible = "stericsson,ab8500-gpio";
+        gpio-controller;
+        #gpio-cells = <2>;
+
+        sysclkreq2 {
+            sysclkreq2-default {
+                mux {
+                    function = "sysclkreq";
+                    groups = "sysclkreq2_d_1";
+                };
+                config {
+                    pins = "GPIO1";
+                    bias-disable;
+                };
+            };
+        };
+    };

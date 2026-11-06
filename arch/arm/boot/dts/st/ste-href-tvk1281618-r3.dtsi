@@ -21,6 +21,58 @@
 		};
 	};
 
+	pinctrl {
+		hall {
+			hall_tvk_mode: hall_tvk {
+				tvk_cfg {
+					pins = "GPIO145_C13";
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		tc35893 {
+			/* IRQ from the TC35893 */
+			tc35893_tvk_mode: tc35893_tvk {
+				tvk_cfg {
+					pins = "GPIO64_F3";
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		accelerometer {
+			accel_tvk_mode: accel_tvk {
+				/* Accelerometer interrupt lines 1 & 2 */
+				tvk_cfg {
+					pins = "GPIO82_C1", "GPIO83_D3";
+					ste,config = <&gpio_in_pd>;
+				};
+			};
+		};
+		magnetometer {
+			magn_tvk_mode: magn_tvk {
+				/* GPIO 32 used for DRDY, pull this down */
+				tvk_cfg {
+					pins = "GPIO32_V2";
+					ste,config = <&gpio_in_pd>;
+				};
+			};
+		};
+		cyttsp {
+			cyttsp_tvk_mode: cyttsp_tvk {
+				/* Touchscreen uses GPIO84 for IRQ */
+				tvk_cfg1 {
+					pins = "GPIO84_C2";
+					ste,config = <&gpio_in_pu>;
+				};
+				/* GPIO143 is reset */
+				tvk_cfg2 {
+					pins = "GPIO143_D12";
+					ste,config = <&gpio_out_hi>;
+				};
+			};
+		};
+	};
+
 	soc {
 		i2c@80004000 {
 			tc35893@44 {
@@ -162,56 +214,5 @@
 			};
 		};
 
-		pinctrl {
-			hall {
-				hall_tvk_mode: hall_tvk {
-					tvk_cfg {
-						pins = "GPIO145_C13";
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			tc35893 {
-				/* IRQ from the TC35893 */
-				tc35893_tvk_mode: tc35893_tvk {
-					tvk_cfg {
-						pins = "GPIO64_F3";
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			accelerometer {
-				accel_tvk_mode: accel_tvk {
-					/* Accelerometer interrupt lines 1 & 2 */
-					tvk_cfg {
-						pins = "GPIO82_C1", "GPIO83_D3";
-						ste,config = <&gpio_in_pd>;
-					};
-				};
-			};
-			magnetometer {
-				magn_tvk_mode: magn_tvk {
-					/* GPIO 32 used for DRDY, pull this down */
-					tvk_cfg {
-						pins = "GPIO32_V2";
-						ste,config = <&gpio_in_pd>;
-					};
-				};
-			};
-			cyttsp {
-				cyttsp_tvk_mode: cyttsp_tvk {
-					/* Touchscreen uses GPIO84 for IRQ */
-					tvk_cfg1 {
-						pins = "GPIO84_C2";
-						ste,config = <&gpio_in_pu>;
-					};
-					/* GPIO143 is reset */
-					tvk_cfg2 {
-						pins = "GPIO143_D12";
-						ste,config = <&gpio_out_hi>;
-					};
-				};
-			};
-		};
 	};
 };

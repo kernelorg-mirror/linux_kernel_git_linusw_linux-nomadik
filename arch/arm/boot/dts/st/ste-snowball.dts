@@ -132,6 +132,159 @@
 			  2900000 0x0>;
 	};
 
+	pinctrl {
+		/*
+		 * Set this up using hogs, as time goes by and as seems fit, these
+		 * can be moved over to being controlled by respective device.
+		 */
+		pinctrl-names = "default";
+		pinctrl-0 = <&gbf_snowball_mode>,
+			  <&wlan_snowball_mode>;
+
+		ethernet {
+			/*
+			 * Mux in "SM" which is used for the
+			 * SMSC911x Ethernet adapter
+			 */
+			eth_snowball_mode: eth_snowball {
+				snowball_mux {
+					function = "sm";
+					groups = "sm_b_1";
+				};
+				/* LAN IRQ pin */
+				snowball_cfg1 {
+					pins = "GPIO140_B11";
+					ste,config = <&in_nopull>;
+				};
+				/* LAN reset pin */
+				snowball_cfg2 {
+					pins = "GPIO141_C12";
+					ste,config = <&gpio_out_hi>;
+				};
+
+			};
+		};
+		sdi0 {
+			sdi0_default_mode: sdi0_default {
+				snowball_mux {
+					function = "mc0";
+					/* Add the DAT31 pin even if it is not really used */
+					groups = "mc0dat31dir_a_1";
+				};
+				snowball_cfg1 {
+					pins = "GPIO21_AB3"; /* DAT31DIR */
+					ste,config = <&out_hi>;
+				};
+				/* SD card detect GPIO pin, extend default state */
+				snowball_cfg2 {
+					pins = "GPIO218_AH11";
+					ste,config = <&gpio_in_pu>;
+				};
+				/* VMMCI level-shifter enable */
+				snowball_cfg3 {
+					pins = "GPIO217_AH12";
+					ste,config = <&gpio_out_hi>;
+				};
+				/* VMMCI level-shifter voltage select */
+				snowball_cfg4 {
+					pins = "GPIO228_AJ6";
+					ste,config = <&gpio_out_hi>;
+				};
+			};
+		};
+		ssp0 {
+			ssp0_snowball_mode: ssp0_snowball_default {
+				snowball_mux {
+					function = "ssp0";
+					groups = "ssp0_a_1";
+				};
+				snowball_cfg1 {
+					pins = "GPIO144_B13"; /* FRM */
+					ste,config = <&gpio_out_hi>;
+				};
+				snowball_cfg2 {
+					pins = "GPIO145_C13"; /* RXD */
+					ste,config = <&in_pd>;
+				};
+				snowball_cfg3 {
+					pins =
+					"GPIO146_D13", /* TXD */
+					"GPIO143_D12"; /* CLK */
+					ste,config = <&out_lo>;
+				};
+
+			};
+		};
+		gpio_led {
+			gpioled_snowball_mode: gpioled_default {
+				snowball_cfg1 {
+					pins = "GPIO142_C11";
+					ste,config = <&gpio_out_hi>;
+				};
+
+			};
+		};
+		accelerometer {
+			accel_snowball_mode: accel_snowball {
+				/* Accelerometer lines */
+				snowball_cfg1 {
+					pins =
+					"GPIO163_C20", /* ACCEL_IRQ1 */
+					"GPIO164_B21"; /* ACCEL_IRQ2 */
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		gyro {
+			gyro_snowball_mode: gyro_snowball {
+				snowball_cfg1 {
+					pins =
+					"GPIO166_A22", /* DRDY */
+					"GPIO169_D22"; /* INT */
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		magnetometer {
+			magneto_snowball_mode: magneto_snowball {
+				snowball_cfg1 {
+					pins = "GPIO165_C21"; /* MAG_DRDY */
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		gbf {
+			gbf_snowball_mode: gbf_snowball {
+				/*
+				 * GBF (GPS, Bluetooth, FM-radio) interface,
+				 * pull low to reset state
+				 */
+				snowball_cfg1 {
+					pins = "GPIO171_D23"; /* GBF_ENA_RESET */
+					ste,config = <&gpio_out_lo>;
+				};
+			 };
+		};
+		wlan {
+			wlan_snowball_mode: wlan_snowball {
+				/*
+				 * Activate this mode with the WLAN chip.
+				 * These are plain GPIO pins used by WLAN
+				 */
+				snowball_cfg1 {
+					pins =
+					"GPIO161_D21", /* WLAN_PMU_EN */
+					"GPIO215_AH13"; /* WLAN_ENA */
+					ste,config = <&gpio_out_lo>;
+				};
+				snowball_cfg2 {
+					pins = "GPIO216_AG12"; /* WLAN_IRQ */
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+	};
+
 	soc {
 		/* Name the GPIO muxed rails on the Snowball board */
 		gpio@8012e000 {
@@ -493,158 +646,6 @@
 			};
 		};
 
-		pinctrl {
-			/*
-			 * Set this up using hogs, as time goes by and as seems fit, these
-			 * can be moved over to being controlled by respective device.
-			 */
-			pinctrl-names = "default";
-			pinctrl-0 = <&gbf_snowball_mode>,
-				  <&wlan_snowball_mode>;
-
-			ethernet {
-				/*
-				 * Mux in "SM" which is used for the
-				 * SMSC911x Ethernet adapter
-				 */
-				eth_snowball_mode: eth_snowball {
-					snowball_mux {
-						function = "sm";
-						groups = "sm_b_1";
-					};
-					/* LAN IRQ pin */
-					snowball_cfg1 {
-						pins = "GPIO140_B11";
-						ste,config = <&in_nopull>;
-					};
-					/* LAN reset pin */
-					snowball_cfg2 {
-						pins = "GPIO141_C12";
-						ste,config = <&gpio_out_hi>;
-					};
-
-				};
-			};
-			sdi0 {
-				sdi0_default_mode: sdi0_default {
-					snowball_mux {
-						function = "mc0";
-						/* Add the DAT31 pin even if it is not really used */
-						groups = "mc0dat31dir_a_1";
-					};
-					snowball_cfg1 {
-						pins = "GPIO21_AB3"; /* DAT31DIR */
-						ste,config = <&out_hi>;
-					};
-					/* SD card detect GPIO pin, extend default state */
-					snowball_cfg2 {
-						pins = "GPIO218_AH11";
-						ste,config = <&gpio_in_pu>;
-					};
-					/* VMMCI level-shifter enable */
-					snowball_cfg3 {
-						pins = "GPIO217_AH12";
-						ste,config = <&gpio_out_hi>;
-					};
-					/* VMMCI level-shifter voltage select */
-					snowball_cfg4 {
-						pins = "GPIO228_AJ6";
-						ste,config = <&gpio_out_hi>;
-					};
-				};
-			};
-			ssp0 {
-				ssp0_snowball_mode: ssp0_snowball_default {
-					snowball_mux {
-						function = "ssp0";
-						groups = "ssp0_a_1";
-					};
-					snowball_cfg1 {
-						pins = "GPIO144_B13"; /* FRM */
-						ste,config = <&gpio_out_hi>;
-					};
-					snowball_cfg2 {
-						pins = "GPIO145_C13"; /* RXD */
-						ste,config = <&in_pd>;
-					};
-					snowball_cfg3 {
-						pins =
-						"GPIO146_D13", /* TXD */
-						"GPIO143_D12"; /* CLK */
-						ste,config = <&out_lo>;
-					};
-
-				};
-			};
-			gpio_led {
-				gpioled_snowball_mode: gpioled_default {
-					snowball_cfg1 {
-						pins = "GPIO142_C11";
-						ste,config = <&gpio_out_hi>;
-					};
-
-				};
-			};
-			accelerometer {
-				accel_snowball_mode: accel_snowball {
-					/* Accelerometer lines */
-					snowball_cfg1 {
-						pins =
-						"GPIO163_C20", /* ACCEL_IRQ1 */
-						"GPIO164_B21"; /* ACCEL_IRQ2 */
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			gyro {
-				gyro_snowball_mode: gyro_snowball {
-					snowball_cfg1 {
-						pins =
-						"GPIO166_A22", /* DRDY */
-						"GPIO169_D22"; /* INT */
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			magnetometer {
-				magneto_snowball_mode: magneto_snowball {
-					snowball_cfg1 {
-						pins = "GPIO165_C21"; /* MAG_DRDY */
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			gbf {
-				gbf_snowball_mode: gbf_snowball {
-					/*
-					 * GBF (GPS, Bluetooth, FM-radio) interface,
-					 * pull low to reset state
-					 */
-					snowball_cfg1 {
-						pins = "GPIO171_D23"; /* GBF_ENA_RESET */
-						ste,config = <&gpio_out_lo>;
-					};
-				 };
-			};
-			wlan {
-				wlan_snowball_mode: wlan_snowball {
-					/*
-					 * Activate this mode with the WLAN chip.
-					 * These are plain GPIO pins used by WLAN
-					 */
-					snowball_cfg1 {
-						pins =
-						"GPIO161_D21", /* WLAN_PMU_EN */
-						"GPIO215_AH13"; /* WLAN_ENA */
-						ste,config = <&gpio_out_lo>;
-					};
-					snowball_cfg2 {
-						pins = "GPIO216_AG12"; /* WLAN_IRQ */
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-		};
 
 		mcde@a0350000 {
 			pinctrl-names = "default", "sleep";

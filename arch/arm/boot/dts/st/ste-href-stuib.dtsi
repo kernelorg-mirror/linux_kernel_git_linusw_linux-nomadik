@@ -25,6 +25,75 @@
 		};
 	};
 
+	pinctrl {
+		/* Pull up this GPIO pin */
+		stmpe {
+			stmpe_stuib_mode: stmpe_stuib {
+				stuib_cfg {
+					pins = "GPIO218_AH11";
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		prox {
+			prox_stuib_mode: prox_stuib {
+				stuib_cfg {
+					pins = "GPIO217_AH12";
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		hall {
+			hall_stuib_mode: stuib_tvk {
+				stuib_cfg {
+					pins = "GPIO145_C13";
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		accelerometer {
+			accel_stuib_mode: accel_stuib {
+				/* Accelerometer interrupt lines 1 & 2 */
+				stuib_cfg {
+					pins = "GPIO82_C1", "GPIO83_D3";
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+		magnetometer {
+			magneto_stuib_mode: magneto_stuib {
+				/* Magnetometer uses GPIO 31 and 32, pull these up/down respectively */
+				stuib_cfg1 {
+					pins = "GPIO31_V3";
+					ste,config = <&gpio_in_pu>;
+				};
+				stuib_cfg2 {
+					pins = "GPIO32_V2";
+					ste,config = <&gpio_in_pd>;
+				};
+			};
+		};
+		touch {
+			touch_rohm_mode: touch_rohm {
+				/*
+				 * ROHM touch screen uses GPIO 143 for
+				 * RST1, GPIO 146 for RST2 and
+				 * GPIO 67 for interrupts. Pull-up
+				 * the IRQ line and drive both
+				 * reset signals low.
+				 */
+				stuib_cfg1 {
+					pins = "GPIO143_D12", "GPIO146_D13";
+					ste,config = <&gpio_out_lo>;
+				};
+				stuib_cfg2 {
+					pins = "GPIO67_G2";
+					ste,config = <&gpio_in_pu>;
+				};
+			};
+		};
+	};
+
 	soc {
 		i2c@80004000 {
 			stmpe1601: port-expander@40 {
@@ -120,75 +189,6 @@
 				rohm,flip-y;
 				pinctrl-names = "default";
 				pinctrl-0 = <&touch_rohm_mode>;
-			};
-		};
-
-		pinctrl {
-			/* Pull up this GPIO pin */
-			stmpe {
-				stmpe_stuib_mode: stmpe_stuib {
-					stuib_cfg {
-						pins = "GPIO218_AH11";
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			prox {
-				prox_stuib_mode: prox_stuib {
-					stuib_cfg {
-						pins = "GPIO217_AH12";
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			hall {
-				hall_stuib_mode: stuib_tvk {
-					stuib_cfg {
-						pins = "GPIO145_C13";
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			accelerometer {
-				accel_stuib_mode: accel_stuib {
-					/* Accelerometer interrupt lines 1 & 2 */
-					stuib_cfg {
-						pins = "GPIO82_C1", "GPIO83_D3";
-						ste,config = <&gpio_in_pu>;
-					};
-				};
-			};
-			magnetometer {
-				magneto_stuib_mode: magneto_stuib {
-					/* Magnetometer uses GPIO 31 and 32, pull these up/down respectively */
-					stuib_cfg1 {
-						pins = "GPIO31_V3";
-						ste,config = <&gpio_in_pu>;
-					};
-					stuib_cfg2 {
-						pins = "GPIO32_V2";
-						ste,config = <&gpio_in_pd>;
-					};
-				};
-			};
-			touch {
-				touch_rohm_mode: touch_rohm {
-					/*
-					 * ROHM touch screen uses GPIO 143 for
-					 * RST1, GPIO 146 for RST2 and
-					 * GPIO 67 for interrupts. Pull-up
-					 * the IRQ line and drive both
-					 * reset signals low.
-					 */
-					stuib_cfg1 {
-						pins = "GPIO143_D12", "GPIO146_D13";
-						ste,config = <&gpio_out_lo>;
-					};
-					stuib_cfg2 {
-						pins = "GPIO67_G2";
-						ste,config = <&gpio_in_pu>;
-					};
-				};
 			};
 		};
 

@@ -107,6 +107,14 @@
 		};
 	};
 
+	pinctrl: pinctrl {
+		compatible = "stericsson,db8500-pinctrl";
+		nomadik-gpio-chips = <&gpio0>, <&gpio1>, <&gpio2>, <&gpio3>,
+					<&gpio4>, <&gpio5>, <&gpio6>, <&gpio7>,
+					<&gpio8>;
+		prcm = <&prcmu>;
+	};
+
 	soc {
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -591,13 +599,6 @@
 			power-domains = <&pm_domains DOMAIN_VAPE>;
 		};
 
-		pinctrl: pinctrl {
-			compatible = "stericsson,db8500-pinctrl";
-			nomadik-gpio-chips = <&gpio0>, <&gpio1>, <&gpio2>, <&gpio3>,
-						<&gpio4>, <&gpio5>, <&gpio6>, <&gpio7>,
-						<&gpio8>;
-			prcm = <&prcmu>;
-		};
 
 		usb_per5@a03e0000 {
 			compatible = "stericsson,db8500-musb";

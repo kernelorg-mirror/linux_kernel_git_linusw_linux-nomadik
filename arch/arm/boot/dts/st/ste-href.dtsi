@@ -44,6 +44,14 @@
 		#thermal-sensor-cells = <0>;
 	};
 
+	pinctrl {
+		sdi0 {
+			sdi0_default_mode: sdi0_default {
+				/* Some boards set additional settings here */
+			};
+		};
+	};
+
 	soc {
 		serial@80120000 {
 			pinctrl-names = "default", "sleep";
@@ -242,13 +250,6 @@
 			status = "okay";
 		};
 
-		pinctrl {
-			sdi0 {
-				sdi0_default_mode: sdi0_default {
-					/* Some boards set additional settings here */
-				};
-			};
-		};
 
 		mcde@a0350000 {
 			pinctrl-names = "default", "sleep";

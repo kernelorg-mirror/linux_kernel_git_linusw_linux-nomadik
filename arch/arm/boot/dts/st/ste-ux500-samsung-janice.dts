@@ -321,7 +321,6 @@
 		io-channels = <&gpadc 0x07>;
 		shunt-resistor-micro-ohms = <15000000>; /* 15 ohms c:a */
 		#io-channel-cells = <0>;
-		io-channel-ranges;
 	};
 
 	/* Bit-banged I2C on GPIO196 and GPIO197 also called "TOUCHKEY_I2C" */

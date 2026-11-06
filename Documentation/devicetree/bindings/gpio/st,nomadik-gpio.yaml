@@ -19,9 +19,13 @@ properties:
     pattern: "^gpio@[0-9a-f]+$"
 
   compatible:
-    enum:
-      - st,nomadik-gpio
-      - mobileye,eyeq5-gpio
+    oneOf:
+      - enum:
+          - st,nomadik-gpio
+          - mobileye,eyeq5-gpio
+      - items:
+          - const: stericsson,db8500-gpio
+          - const: st,nomadik-gpio
 
   reg:
     maxItems: 1
@@ -33,6 +37,10 @@ properties:
     const: 2
 
   gpio-controller: true
+
+  gpio-line-names:
+    minItems: 1
+    maxItems: 32
 
   interrupt-controller: true
 
@@ -59,6 +67,11 @@ properties:
 
   resets:
     maxItems: 1
+
+patternProperties:
+  "-hog$":
+    type: object
+    $ref: /schemas/gpio/gpio-hog.yaml#
 
 required:
   - compatible

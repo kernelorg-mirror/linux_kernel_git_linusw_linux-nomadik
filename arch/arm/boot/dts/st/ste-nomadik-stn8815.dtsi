@@ -728,7 +728,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&i2c1_default_mux>, <&i2c1_default_mode>;
 
-		camera@2d {
+		camera@10 {
 			   compatible = "st,camera";
 			   reg = <0x10>;
 		};

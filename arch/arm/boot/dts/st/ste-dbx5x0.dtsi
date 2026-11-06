@@ -115,6 +115,62 @@
 		prcm = <&prcmu>;
 	};
 
+	pmu {
+		compatible = "arm,cortex-a9-pmu";
+		interrupt-parent = <&intc>;
+		interrupts = <GIC_SPI 7 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
+	pm_domains: power-controller {
+		compatible = "stericsson,ux500-pm-domains";
+		#power-domain-cells = <1>;
+		power-domains = <&pm_domains DOMAIN_VAPE>,
+				<&pm_domains DOMAIN_VAPE>,
+				<&pm_domains DOMAIN_VAPE>,
+				<&pm_domains DOMAIN_VAPE>,
+				<&pm_domains DOMAIN_VAPE>,
+				<&pm_domains DOMAIN_VAPE>;
+		power-domains-child-ids = <DOMAIN_SVA_MMDSP>,
+					 <DOMAIN_SVA_PIPE>,
+					 <DOMAIN_SIA_MMDSP>,
+					 <DOMAIN_SIA_PIPE>,
+					 <DOMAIN_SGA>,
+					 <DOMAIN_B2R2_MCDE>;
+	};
+
+	replicator {
+		compatible = "arm,coresight-static-replicator";
+		clocks = <&prcmu_clk PRCMU_APEATCLK>;
+		clock-names = "atclk";
+		power-domains = <&pm_domains DOMAIN_VARM>;
+
+		out-ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+				replicator_out_port0: endpoint {
+					remote-endpoint = <&tpiu_in_port>;
+				};
+			};
+			port@1 {
+				reg = <1>;
+				replicator_out_port1: endpoint {
+					remote-endpoint = <&etb_in_port>;
+				};
+			};
+		};
+
+		in-ports {
+			port {
+				replicator_in_port0: endpoint {
+					remote-endpoint = <&funnel_out_port>;
+				};
+			};
+		};
+	};
+
 	soc {
 		#address-cells = <1>;
 		#size-cells = <1>;
@@ -259,39 +315,6 @@
 			};
 		};
 
-		replicator {
-			compatible = "arm,coresight-static-replicator";
-			clocks = <&prcmu_clk PRCMU_APEATCLK>;
-			clock-names = "atclk";
-			power-domains = <&pm_domains DOMAIN_VARM>;
-
-			out-ports {
-				#address-cells = <1>;
-				#size-cells = <0>;
-
-				port@0 {
-					reg = <0>;
-					replicator_out_port0: endpoint {
-						remote-endpoint = <&tpiu_in_port>;
-					};
-				};
-				port@1 {
-					reg = <1>;
-					replicator_out_port1: endpoint {
-						remote-endpoint = <&etb_in_port>;
-					};
-				};
-			};
-
-			in-ports {
-				port {
-					replicator_in_port0: endpoint {
-						remote-endpoint = <&funnel_out_port>;
-					};
-				};
-			};
-		};
-
 		tpiu@80190000 {
 			compatible = "arm,coresight-tpiu", "arm,primecell";
 			reg = <0x80190000 0x1000>;
@@ -355,28 +378,6 @@
 			power-domains = <&pm_domains DOMAIN_VARM>;
 			cache-unified;
 			cache-level = <2>;
-		};
-
-		pmu {
-			compatible = "arm,cortex-a9-pmu";
-			interrupts = <GIC_SPI 7 IRQ_TYPE_LEVEL_HIGH>;
-		};
-
-		pm_domains: power-controller {
-			compatible = "stericsson,ux500-pm-domains";
-			#power-domain-cells = <1>;
-			power-domains = <&pm_domains DOMAIN_VAPE>,
-					<&pm_domains DOMAIN_VAPE>,
-					<&pm_domains DOMAIN_VAPE>,
-					<&pm_domains DOMAIN_VAPE>,
-					<&pm_domains DOMAIN_VAPE>,
-					<&pm_domains DOMAIN_VAPE>;
-			power-domains-child-ids = <DOMAIN_SVA_MMDSP>,
-						 <DOMAIN_SVA_PIPE>,
-						 <DOMAIN_SIA_MMDSP>,
-						 <DOMAIN_SIA_PIPE>,
-						 <DOMAIN_SGA>,
-						 <DOMAIN_B2R2_MCDE>;
 		};
 
 		clocks@8012f000 {

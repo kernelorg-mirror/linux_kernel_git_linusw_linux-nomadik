@@ -106,7 +106,7 @@
 		};
 	};
 
-	i2c-1 {
+	i2c@101f7000 {
 		lis3lv02dl@1d {
 			/* Accelerometer */
 			compatible = "st,lis3lv02dl-accel";

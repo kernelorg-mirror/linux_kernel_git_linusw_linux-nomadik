@@ -241,7 +241,6 @@
 		magnetometer@c {
 			compatible = "alps,hscdtd008a";
 			reg = <0x0c>;
-			clock-frequency = <400000>;
 
 			avdd-supply = <&ab8500_ldo_aux1_reg>; // 3V
 			dvdd-supply = <&ab8500_ldo_aux8_reg>; // 1.8V
@@ -482,7 +481,6 @@
 			proximity@39 {
 				/* Codina has the Amstaos TMD2672 */
 				compatible = "amstaos,tmd2672";
-				clock-frequency = <400000>;
 				reg = <0x39>;
 
 				/* IRQ on GPIO146 "PS_INT" */

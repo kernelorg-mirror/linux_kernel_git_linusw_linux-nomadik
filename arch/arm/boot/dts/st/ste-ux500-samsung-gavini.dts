@@ -536,7 +536,6 @@
 			proximity@39 {
 				/* Gavini has the GP2A030S00F proximity sensor */
 				compatible = "sharp,gp2a030s00f";
-				clock-frequency = <400000>;
 				reg = <0x39>;
 				/* FIXME: GPIO146 provides power on, IR LED? */
 			};

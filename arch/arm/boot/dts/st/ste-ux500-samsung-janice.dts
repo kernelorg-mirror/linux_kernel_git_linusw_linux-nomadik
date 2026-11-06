@@ -411,7 +411,6 @@
 			compatible = "nxp,pn544-i2c";
 			/* IF0, IF1 high, gives I2C address 0x2B */
 			reg = <0x2b>;
-			clock-frequency = <400000>;
 			/* NFC IRQ on GPIO32 */
 			interrupt-parent = <&gpio1>;
 			interrupts = <0 IRQ_TYPE_EDGE_FALLING>;
@@ -607,7 +606,6 @@
 			proximity@44 {
 				/* Janice has the GP2AP002A00F with light sensor */
 				compatible = "sharp,gp2ap002a00f";
-				clock-frequency = <400000>;
 				reg = <0x44>;
 
 				interrupt-parent = <&gpio4>;

@@ -414,7 +414,6 @@
 
 			proximity@44 {
 				compatible = "sharp,gp2ap002s00f";
-				clock-frequency = <400000>;
 				reg = <0x44>;
 
 				interrupt-parent = <&gpio4>;
@@ -438,7 +437,6 @@
 
 			accel@18 {
 				compatible = "bosch,bma254";
-				clock-frequency = <400000>;
 				reg = <0x18>;
 
 				mount-matrix = "-1", "0", "0",

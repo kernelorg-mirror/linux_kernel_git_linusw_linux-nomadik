@@ -15,7 +15,7 @@
 
 	battery: battery {
 		compatible = "simple-battery";
-		battery-type = "lithium-ion-polymer";
+		device-chemistry = "lithium-ion-polymer";
 	};
 
 	thermal-zones {

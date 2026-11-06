@@ -881,7 +881,7 @@
 			dma-names = "rx", "tx";
 
 			clocks = <&prcc_kclk 1 0>, <&prcc_pclk 1 0>;
-			clock-names = "uart", "apb_pclk";
+			clock-names = "uartclk", "apb_pclk";
 			power-domains = <&pm_domains DOMAIN_VAPE>;
 			resets = <&prcc_reset DB8500_PRCC_1 DB8500_PRCC_1_RESET_UART0>;
 
@@ -898,7 +898,7 @@
 			dma-names = "rx", "tx";
 
 			clocks = <&prcc_kclk 1 1>, <&prcc_pclk 1 1>;
-			clock-names = "uart", "apb_pclk";
+			clock-names = "uartclk", "apb_pclk";
 			power-domains = <&pm_domains DOMAIN_VAPE>;
 			resets = <&prcc_reset DB8500_PRCC_1 DB8500_PRCC_1_RESET_UART1>;
 
@@ -915,7 +915,7 @@
 			dma-names = "rx", "tx";
 
 			clocks = <&prcc_kclk 3 6>, <&prcc_pclk 3 6>;
-			clock-names = "uart", "apb_pclk";
+			clock-names = "uartclk", "apb_pclk";
 			power-domains = <&pm_domains DOMAIN_VAPE>;
 			resets = <&prcc_reset DB8500_PRCC_3 DB8500_PRCC_3_RESET_UART2>;
 

@@ -1,0 +1,113 @@
+# SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause)
+%YAML 1.2
+---
+$id: http://devicetree.org/schemas/pinctrl/stericsson,nomadik.yaml#
+$schema: http://devicetree.org/meta-schemas/core.yaml#
+
+title: ST-Ericsson Nomadik pin controller
+
+maintainers:
+  - Linus Walleij <linusw@kernel.org>
+
+properties:
+  compatible:
+    enum:
+      - stericsson,db8500-pinctrl
+      - stericsson,stn8815-pinctrl
+
+  nomadik-gpio-chips:
+    description: GPIO banks providing the pin control registers.
+    $ref: /schemas/types.yaml#/definitions/phandle-array
+    minItems: 1
+    maxItems: 9
+    items:
+      maxItems: 1
+
+  prcm:
+    description: PRCMU controlling the alternate pin functions.
+    $ref: /schemas/types.yaml#/definitions/phandle
+
+patternProperties:
+  '^(?!phandle$|compatible$|nomadik-gpio-chips$|prcm$|pinctrl-[0-9]+$|pinctrl-names$)[a-zA-Z0-9_-]+$':
+    $ref: '#/$defs/config-node'
+
+required:
+  - compatible
+  - nomadik-gpio-chips
+
+additionalProperties: false
+
+$defs:
+  config-node:
+    type: object
+    properties:
+      function:
+        $ref: /schemas/types.yaml#/definitions/string
+      groups:
+        $ref: /schemas/types.yaml#/definitions/string-array
+      pins:
+        $ref: /schemas/types.yaml#/definitions/string-array
+      ste,config:
+        description: Shared pin configuration to apply.
+        $ref: /schemas/types.yaml#/definitions/phandle
+      ste,input:
+        description: Input pull configuration.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 2
+      ste,output:
+        description: Output value.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 2
+      ste,gpio:
+        description: GPIO mode enable.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 1
+      ste,sleep:
+        description: Sleep mode enable.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 1
+      ste,sleep-input:
+        description: Sleep input pull configuration.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 3
+      ste,sleep-output:
+        description: Sleep output value.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 2
+      ste,sleep-gpio:
+        description: Sleep GPIO mode enable.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 1
+      ste,sleep-wakeup:
+        description: Sleep wakeup disable.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 1
+      ste,sleep-pull-disable:
+        description: Sleep pull resistor disable.
+        $ref: /schemas/types.yaml#/definitions/uint32
+        maximum: 1
+    patternProperties:
+      '^(?!phandle$|pins$|groups$|function$)[a-zA-Z0-9_-]+$':
+        $ref: '#/$defs/config-node'
+    additionalProperties: false
+
+examples:
+  - |
+    pinctrl {
+        compatible = "stericsson,db8500-pinctrl";
+        nomadik-gpio-chips = <&gpio0>, <&gpio1>;
+        prcm = <&prcmu>;
+
+        uart0 {
+            uart0-default {
+                mux {
+                    function = "u0";
+                    groups = "u0_a_1";
+                };
+                config {
+                    pins = "GPIO0_AJ5";
+                    ste,input = <1>;
+                };
+            };
+        };
+    };

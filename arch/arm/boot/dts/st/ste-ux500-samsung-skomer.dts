@@ -472,7 +472,7 @@
 			pinctrl-0 = <&dsi_default_mode>;
 
 			dsi@a0351000 {
-				panel {
+				panel@0 {
 					/* NT35510-based Hydis HVA40WV1 */
 					compatible = "hydis,hva40wv1", "novatek,nt35510";
 					reg = <0>;

@@ -106,7 +106,7 @@
 		};
 	};
 
-	i2c1 {
+	i2c-1 {
 		lis3lv02dl@1d {
 			/* Accelerometer */
 			compatible = "st,lis3lv02dl-accel";
@@ -115,7 +115,7 @@
 	};
 
 	/* GPIO I2C connected to the USB portions of the STw4811 only */
-	gpio-i2c {
+	i2c-bitbang {
 		compatible = "i2c-gpio";
 		sda-gpios = <&gpio2 10 0>;
 		scl-gpios = <&gpio2 9 0>;
@@ -131,7 +131,7 @@
 	};
 
 
-	amba {
+	bus {
 		/* Activate RXTX on UART 0 */
 		uart0: serial@101fd000 {
 			pinctrl-names = "default";

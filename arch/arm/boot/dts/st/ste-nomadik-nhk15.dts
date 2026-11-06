@@ -89,7 +89,7 @@
 		};
 	};
 
-	i2c0 {
+	i2c-0 {
 		lis3lv02dl@1d {
 			/* Accelerometer */
 			compatible = "st,lis3lv02dl-accel";
@@ -173,7 +173,7 @@
 		};
 	};
 
-	amba {
+	bus {
 		clcd@10120000 {
 			status = "okay";
 			pinctrl-names = "default";

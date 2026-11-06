@@ -139,7 +139,7 @@
 				};
 			};
 		};
-		i2c0 {
+		i2c-0 {
 			i2c0_default_mux: i2c0_mux {
 				i2c0_default_mux {
 					function = "i2c0";
@@ -153,7 +153,7 @@
 				};
 			};
 		};
-		i2c1 {
+		i2c-1 {
 			i2c1_default_mux: i2c1_mux {
 				i2c1_default_mux {
 					function = "i2c1";
@@ -689,7 +689,7 @@
 	};
 
 	/* I2C0 connected to the STw4811 power management chip */
-	i2c0 {
+	i2c-0 {
 		compatible = "st,nomadik-i2c", "arm,primecell";
 		reg = <0x101f8000 0x1000>;
 		interrupt-parent = <&vica>;
@@ -715,7 +715,7 @@
 	};
 
 	/* I2C1 connected to various sensors */
-	i2c1 {
+	i2c-1 {
 		compatible = "st,nomadik-i2c", "arm,primecell";
 		reg = <0x101f7000 0x1000>;
 		interrupt-parent = <&vica>;
@@ -738,7 +738,7 @@
 		};
 	};
 
-	amba {
+	bus {
 		compatible = "simple-bus";
 		#address-cells = <1>;
 		#size-cells = <1>;

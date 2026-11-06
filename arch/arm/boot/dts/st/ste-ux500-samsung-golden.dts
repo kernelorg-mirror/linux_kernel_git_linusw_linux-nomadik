@@ -248,8 +248,8 @@
 				pinctrl-names = "default";
 				pinctrl-0 = <&proximity_default>;
 
-				sharp,proximity-far-hysteresis = <0x40>;
-				sharp,proximity-close-hysteresis = <0x0f>;
+				sharp,proximity-far-hysteresis = /bits/ 8 <0x40>;
+				sharp,proximity-close-hysteresis = /bits/ 8 <0x0f>;
 			};
 		};
 

@@ -1414,6 +1414,14 @@ static int gp2ap020a00f_probe(struct i2c_client *client)
 
 	data = iio_priv(indio_dev);
 
+	err = devm_regulator_get_enable_optional(dev, "vdd");
+	if (err && err != -ENODEV)
+		return dev_err_probe(dev, err, "Failed to enable core supply\n");
+
+	err = devm_regulator_get_enable_optional(dev, "vio");
+	if (err && err != -ENODEV)
+		return dev_err_probe(dev, err, "Failed to enable I/O supply\n");
+
 	data->vled_reg = devm_regulator_get(dev, "vled");
 	if (IS_ERR(data->vled_reg))
 		return PTR_ERR(data->vled_reg);

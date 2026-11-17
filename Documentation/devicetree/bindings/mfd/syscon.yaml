@@ -111,6 +111,7 @@ properties:
               - qcom,apq8064-mmss-sfpb
               - qcom,apq8064-sps-sic
               - qcom,msm8960-sps-sic
+              - qcom,msm8996-saw3-cbf
               - rockchip,px30-qos
               - rockchip,rk3036-qos
               - rockchip,rk3066-qos

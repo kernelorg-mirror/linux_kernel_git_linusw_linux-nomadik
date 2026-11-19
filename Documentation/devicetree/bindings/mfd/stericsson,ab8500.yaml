@@ -60,6 +60,9 @@ properties:
       '#clock-cells':
         const: 1
 
+      vintcore-supply:
+        description: VintCore12 supply for the AB8500 internal ULP clock PLL.
+
   gpio:
     description: Node describing the AB8500 GPIO controller. A few
       GPIO pins available for misc usage.
@@ -651,5 +654,21 @@ required:
   - phy
   - key
   - regulator
+
+allOf:
+  - if:
+      properties:
+        compatible:
+          const: stericsson,ab8500
+    then:
+      properties:
+        clock-controller:
+          required:
+            - vintcore-supply
+    else:
+      properties:
+        clock-controller:
+          properties:
+            vintcore-supply: false
 
 additionalProperties: false

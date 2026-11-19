@@ -34,6 +34,7 @@
 				ab8500_clock: clock-controller {
 					compatible = "stericsson,ab8500-clk";
 					#clock-cells = <1>;
+					vintcore-supply = <&ab8500_ldo_intcore_reg>;
 				};
 
 				ab8500_gpio: gpio {

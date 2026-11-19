@@ -713,7 +713,6 @@ static void twl_remove(struct i2c_client *client)
 		twl->client = NULL;
 	}
 	twl_priv->ready = false;
-	twl_priv = NULL;
 }
 
 
@@ -733,6 +732,11 @@ static const struct mfd_cell twl6032_cells[] = {
 static void twl_unregister_device(void *data)
 {
 	platform_device_unregister(data);
+}
+
+static void twl_reset_priv(void *data)
+{
+	twl_priv = NULL;
 }
 
 /* NOTE: This driver only handles a single twl4030/tps659x0 chip */
@@ -786,6 +790,10 @@ twl_probe(struct i2c_client *client)
 		status = -ENOMEM;
 		goto out;
 	}
+
+	status = devm_add_action_or_reset(&client->dev, twl_reset_priv, NULL);
+	if (status)
+		goto out;
 
 	if ((id->driver_data) & TWL6030_CLASS) {
 		twl_priv->twl_id = TWL6030_CLASS_ID;
@@ -909,9 +917,6 @@ fail:
 	if (status < 0)
 		twl_remove(client);
 out:
-	if (status < 0)
-		twl_priv = NULL;
-
 	return status;
 }
 

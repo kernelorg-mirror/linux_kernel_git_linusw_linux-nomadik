@@ -691,6 +691,11 @@ static void twl_remove(struct i2c_client *client)
 {
 	unsigned i, num_slaves;
 
+	of_platform_depopulate(&client->dev);
+
+	if (twl_class_is_6030())
+		mfd_remove_devices(&client->dev);
+
 	if (pm_power_off == twl6030_power_off)
 		pm_power_off = NULL;
 
@@ -708,6 +713,7 @@ static void twl_remove(struct i2c_client *client)
 		twl->client = NULL;
 	}
 	twl_priv->ready = false;
+	twl_priv = NULL;
 }
 
 
@@ -883,10 +889,10 @@ twl_probe(struct i2c_client *client)
 			num_cells = ARRAY_SIZE(twl6030_cells);
 		}
 
-		status = devm_mfd_add_devices(&client->dev, PLATFORM_DEVID_NONE,
-					      cells, num_cells, NULL, 0, NULL);
+		status = mfd_add_devices(&client->dev, PLATFORM_DEVID_NONE,
+					 cells, num_cells, NULL, 0, NULL);
 		if (status < 0)
-			goto out;
+			goto fail;
 
 		if (of_device_is_system_power_controller(node)) {
 			if (!pm_power_off)
@@ -903,6 +909,9 @@ fail:
 	if (status < 0)
 		twl_remove(client);
 out:
+	if (status < 0)
+		twl_priv = NULL;
+
 	return status;
 }
 

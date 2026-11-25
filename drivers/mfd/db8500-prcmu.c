@@ -366,13 +366,11 @@ static struct {
  * mb1_transfer - state needed for mailbox 1 communication.
  * @lock:	The transaction lock.
  * @work:	The transaction completion structure.
- * @ape_opp:	The current APE OPP.
  * @ack:	Reply ("acknowledge") data.
  */
 static struct {
 	struct mutex lock;
 	struct completion work;
-	u8 ape_opp;
 	struct {
 		u8 header;
 		u8 arm_opp;
@@ -692,13 +690,10 @@ int db8500_prcmu_set_ape_opp(u8 opp)
 {
 	int r = 0;
 
-	if (opp == mb1_transfer.ape_opp)
-		return 0;
+	if (opp != APE_50_OPP && opp != APE_100_OPP)
+		return -EINVAL;
 
 	mutex_lock(&mb1_transfer.lock);
-
-	if ((opp != APE_100_OPP) && (mb1_transfer.ape_opp != APE_100_OPP))
-		goto skip_message;
 
 	while (readl(PRCM_MBOX_CPU_VAL) & MBOX_BIT(1))
 		cpu_relax();
@@ -713,10 +708,6 @@ int db8500_prcmu_set_ape_opp(u8 opp)
 	if ((mb1_transfer.ack.header != MB1H_ARM_APE_OPP) ||
 		(mb1_transfer.ack.ape_opp != opp))
 		r = -EIO;
-
-skip_message:
-	if (!r)
-		mb1_transfer.ape_opp = opp;
 
 	mutex_unlock(&mb1_transfer.lock);
 
@@ -1760,7 +1751,6 @@ void __init db8500_prcmu_early_init(void)
 	init_completion(&mb0_transfer.ac_wake_work);
 	mutex_init(&mb1_transfer.lock);
 	init_completion(&mb1_transfer.work);
-	mb1_transfer.ape_opp = APE_NO_CHANGE;
 	mutex_init(&mb2_transfer.lock);
 	init_completion(&mb2_transfer.work);
 	spin_lock_init(&mb2_transfer.auto_pm_lock);

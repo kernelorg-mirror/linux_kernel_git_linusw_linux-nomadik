@@ -14,6 +14,7 @@
 #include <linux/io.h>
 #include <linux/err.h>
 #include "clk.h"
+#include "clk-prcmu-hw.h"
 
 #define to_clk_prcmu(_hw) container_of(_hw, struct clk_prcmu, hw)
 #define to_clk_prcmu_clkout(_hw) container_of(_hw, struct clk_prcmu_clkout, hw)
@@ -37,13 +38,13 @@ static int clk_prcmu_prepare(struct clk_hw *hw)
 {
 	struct clk_prcmu *clk = to_clk_prcmu(hw);
 
-	return db8500_prcmu_request_clock(clk->cg_sel, true);
+	return ux500_prcmu_clk_request(clk->cg_sel, true);
 }
 
 static void clk_prcmu_unprepare(struct clk_hw *hw)
 {
 	struct clk_prcmu *clk = to_clk_prcmu(hw);
-	if (db8500_prcmu_request_clock(clk->cg_sel, false))
+	if (ux500_prcmu_clk_request(clk->cg_sel, false))
 		pr_err("clk_prcmu: %s failed to disable %s.\n", __func__,
 		       clk_hw_get_name(hw));
 }
@@ -52,7 +53,7 @@ static unsigned long clk_prcmu_recalc_rate(struct clk_hw *hw,
 					   unsigned long parent_rate)
 {
 	struct clk_prcmu *clk = to_clk_prcmu(hw);
-	return prcmu_clock_rate(clk->cg_sel);
+	return ux500_prcmu_clk_rate(clk->cg_sel);
 }
 
 static const struct {
@@ -103,7 +104,7 @@ static int clk_prcmu_set_clock_rate(u8 clock, unsigned long rate)
 	if (clock == PRCMU_ARMSS)
 		return clk_prcmu_set_armss_rate(rate);
 
-	return prcmu_set_clock_rate(clock, rate);
+	return ux500_prcmu_clk_set_rate(clock, rate);
 }
 
 static int clk_prcmu_determine_rate(struct clk_hw *hw,
@@ -114,7 +115,7 @@ static int clk_prcmu_determine_rate(struct clk_hw *hw,
 	if (clk->cg_sel == PRCMU_ARMSS)
 		req->rate = clk_prcmu_round_armss_rate(req->rate);
 	else
-		req->rate = prcmu_round_clock_rate(clk->cg_sel, req->rate);
+		req->rate = ux500_prcmu_clk_round_rate(clk->cg_sel, req->rate);
 
 	return 0;
 }
@@ -143,7 +144,7 @@ static int clk_prcmu_opp_prepare(struct clk_hw *hw)
 		clk->opp_requested = 1;
 	}
 
-	err = db8500_prcmu_request_clock(clk->cg_sel, true);
+	err = ux500_prcmu_clk_request(clk->cg_sel, true);
 	if (err) {
 		prcmu_qos_remove_requirement(PRCMU_QOS_APE_OPP,
 					(char *)clk_hw_get_name(hw));
@@ -158,7 +159,7 @@ static void clk_prcmu_opp_unprepare(struct clk_hw *hw)
 {
 	struct clk_prcmu *clk = to_clk_prcmu(hw);
 
-	if (db8500_prcmu_request_clock(clk->cg_sel, false)) {
+	if (ux500_prcmu_clk_request(clk->cg_sel, false)) {
 		pr_err("clk_prcmu: %s failed to disable %s.\n", __func__,
 			clk_hw_get_name(hw));
 		return;
@@ -186,7 +187,7 @@ static int clk_prcmu_opp_volt_prepare(struct clk_hw *hw)
 		clk->opp_requested = 1;
 	}
 
-	err = db8500_prcmu_request_clock(clk->cg_sel, true);
+	err = ux500_prcmu_clk_request(clk->cg_sel, true);
 	if (err) {
 		db8500_prcmu_request_ape_opp_100_voltage(false);
 		clk->opp_requested = 0;
@@ -200,7 +201,7 @@ static void clk_prcmu_opp_volt_unprepare(struct clk_hw *hw)
 {
 	struct clk_prcmu *clk = to_clk_prcmu(hw);
 
-	if (db8500_prcmu_request_clock(clk->cg_sel, false)) {
+	if (ux500_prcmu_clk_request(clk->cg_sel, false)) {
 		pr_err("clk_prcmu: %s failed to disable %s.\n", __func__,
 			clk_hw_get_name(hw));
 		return;

@@ -704,10 +704,6 @@ void prcmu_configure_auto_pm(struct prcmu_auto_pm_config *sleep,
 	struct prcmu_auto_pm_config *idle);
 bool prcmu_is_auto_pm_enabled(void);
 
-unsigned long prcmu_clock_rate(u8 clock);
-long prcmu_round_clock_rate(u8 clock, unsigned long rate);
-int prcmu_set_clock_rate(u8 clock, unsigned long rate);
-int prcmu_set_clock_divider(u8 clock, u8 divider);
 int db8500_prcmu_config_hotdog(u8 threshold);
 int db8500_prcmu_config_hotmon(u8 low, u8 high);
 int db8500_prcmu_start_temp_sense(u16 cycles32k);
@@ -732,7 +728,6 @@ int db8500_prcmu_set_power_state(u8 state, bool keep_ulp_clk, bool keep_ap_pll);
 u8 db8500_prcmu_get_power_state_result(void);
 void db8500_prcmu_enable_wakeups(u32 wakeups);
 int db8500_prcmu_set_epod(u16 epod_id, u8 epod_state);
-int db8500_prcmu_request_clock(u8 clock, bool enable);
 void db8500_prcmu_config_abb_event_readout(u32 abb_events);
 void db8500_prcmu_get_abb_event_buffer(void __iomem **buf);
 int db8500_prcmu_config_esram0_deep_sleep(u8 state);
@@ -740,6 +735,8 @@ u16 db8500_prcmu_get_reset_code(void);
 bool db8500_prcmu_is_ac_wake_requested(void);
 int db8500_prcmu_set_arm_opp(u8 opp);
 int db8500_prcmu_get_arm_opp(void);
+int db8500_prcmu_request_pll(u8 clock, bool enable);
+int db8500_prcmu_request_sysclk(bool enable);
 int db8500_prcmu_set_ape_opp(u8 opp);
 int db8500_prcmu_get_ape_opp(void);
 int db8500_prcmu_request_ape_opp_100_voltage(bool enable);
@@ -813,26 +810,6 @@ static inline bool prcmu_is_auto_pm_enabled(void)
 	return false;
 }
 
-static inline unsigned long prcmu_clock_rate(u8 clock)
-{
-	return 0;
-}
-
-static inline long prcmu_round_clock_rate(u8 clock, unsigned long rate)
-{
-	return 0;
-}
-
-static inline int prcmu_set_clock_rate(u8 clock, unsigned long rate)
-{
-	return 0;
-}
-
-static inline int prcmu_set_clock_divider(u8 clock, u8 divider)
-{
-	return 0;
-}
-
 static inline int db8500_prcmu_config_hotdog(u8 threshold)
 {
 	return 0;
@@ -894,11 +871,6 @@ static inline u8 db8500_prcmu_get_power_state_result(void)
 static inline void db8500_prcmu_enable_wakeups(u32 wakeups) {}
 
 static inline int db8500_prcmu_set_epod(u16 epod_id, u8 epod_state)
-{
-	return 0;
-}
-
-static inline int db8500_prcmu_request_clock(u8 clock, bool enable)
 {
 	return 0;
 }

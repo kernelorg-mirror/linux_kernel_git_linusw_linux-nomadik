@@ -521,14 +521,12 @@ enum prcmu_wdog_id {
  * @APE_NO_CHANGE: The APE operating point is unchanged
  * @APE_100_OPP: The new APE operating point is ape100opp
  * @APE_50_OPP: 50%
- * @APE_50_PARTLY_25_OPP: 50%, except some clocks at 25%.
  */
 enum ape_opp {
 	APE_OPP_INIT = 0x00,
 	APE_NO_CHANGE = 0x01,
 	APE_100_OPP = 0x02,
 	APE_50_OPP = 0x03,
-	APE_50_PARTLY_25_OPP = 0xFF,
 };
 
 /**

@@ -781,52 +781,6 @@ int db8500_prcmu_get_ddr_opp(void)
 	return readb(PRCM_DDR_SUBSYS_APE_MINBW);
 }
 
-/* Divide the frequency of certain clocks by 2 for APE_50_PARTLY_25_OPP. */
-static void request_even_slower_clocks(bool enable)
-{
-	u32 clock_reg[] = {
-		PRCM_ACLK_MGT,
-		PRCM_DMACLK_MGT
-	};
-	unsigned long flags;
-	unsigned int i;
-
-	spin_lock_irqsave(&clk_mgt_lock, flags);
-
-	/* Grab the HW semaphore. */
-	while ((readl(PRCM_SEM) & PRCM_SEM_PRCM_SEM) != 0)
-		cpu_relax();
-
-	for (i = 0; i < ARRAY_SIZE(clock_reg); i++) {
-		u32 val;
-		u32 div;
-
-		val = readl(prcmu_base + clock_reg[i]);
-		div = (val & PRCM_CLK_MGT_CLKPLLDIV_MASK);
-		if (enable) {
-			if ((div <= 1) || (div > 15)) {
-				pr_err("prcmu: Bad clock divider %d in %s\n",
-					div, __func__);
-				goto unlock_and_return;
-			}
-			div <<= 1;
-		} else {
-			if (div <= 2)
-				goto unlock_and_return;
-			div >>= 1;
-		}
-		val = ((val & ~PRCM_CLK_MGT_CLKPLLDIV_MASK) |
-			(div & PRCM_CLK_MGT_CLKPLLDIV_MASK));
-		writel(val, prcmu_base + clock_reg[i]);
-	}
-
-unlock_and_return:
-	/* Release the HW semaphore. */
-	writel(0, PRCM_SEM);
-
-	spin_unlock_irqrestore(&clk_mgt_lock, flags);
-}
-
 /**
  * db8500_prcmu_set_ape_opp - set the appropriate APE OPP
  * @opp: The new APE operating point to which transition is to be made
@@ -843,9 +797,6 @@ int db8500_prcmu_set_ape_opp(u8 opp)
 
 	mutex_lock(&mb1_transfer.lock);
 
-	if (mb1_transfer.ape_opp == APE_50_PARTLY_25_OPP)
-		request_even_slower_clocks(false);
-
 	if ((opp != APE_100_OPP) && (mb1_transfer.ape_opp != APE_100_OPP))
 		goto skip_message;
 
@@ -854,8 +805,7 @@ int db8500_prcmu_set_ape_opp(u8 opp)
 
 	writeb(MB1H_ARM_APE_OPP, (tcdm_base + PRCM_MBOX_HEADER_REQ_MB1));
 	writeb(ARM_NO_CHANGE, (tcdm_base + PRCM_REQ_MB1_ARM_OPP));
-	writeb(((opp == APE_50_PARTLY_25_OPP) ? APE_50_OPP : opp),
-		(tcdm_base + PRCM_REQ_MB1_APE_OPP));
+	writeb(opp, (tcdm_base + PRCM_REQ_MB1_APE_OPP));
 
 	writel(MBOX_BIT(1), PRCM_MBOX_CPU_SET);
 	wait_for_completion(&mb1_transfer.work);
@@ -865,9 +815,6 @@ int db8500_prcmu_set_ape_opp(u8 opp)
 		r = -EIO;
 
 skip_message:
-	if ((!r && (opp == APE_50_PARTLY_25_OPP)) ||
-		(r && (mb1_transfer.ape_opp == APE_50_PARTLY_25_OPP)))
-		request_even_slower_clocks(true);
 	if (!r)
 		mb1_transfer.ape_opp = opp;
 

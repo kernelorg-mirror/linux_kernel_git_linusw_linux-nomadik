@@ -53,11 +53,66 @@ static unsigned long clk_prcmu_recalc_rate(struct clk_hw *hw,
 	return prcmu_clock_rate(clk->cg_sel);
 }
 
+static const struct {
+	unsigned long db8500_rate;
+	unsigned long db8520_rate;
+	u8 opp;
+} armss_opps[] = {
+	{  199680000,  199680000, ARM_EXTCLK },
+	{  399360000,  399360000, ARM_50_OPP },
+	{  798720000,  798720000, ARM_100_OPP },
+	{  998400000, 1152000000, ARM_MAX_OPP },
+};
+
+static unsigned long clk_prcmu_armss_rate(unsigned int index)
+{
+	const struct prcmu_fw_version *fw = prcmu_get_fw_version();
+
+	if (fw && fw->project == PRCMU_FW_PROJECT_U8520)
+		return armss_opps[index].db8520_rate;
+
+	return armss_opps[index].db8500_rate;
+}
+
+static unsigned long clk_prcmu_round_armss_rate(unsigned long rate)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(armss_opps) - 1; i++)
+		if (rate <= clk_prcmu_armss_rate(i))
+			break;
+
+	return clk_prcmu_armss_rate(i);
+}
+
+static int clk_prcmu_set_armss_rate(unsigned long rate)
+{
+	unsigned int i;
+
+	for (i = 0; i < ARRAY_SIZE(armss_opps); i++)
+		if (rate == clk_prcmu_armss_rate(i))
+			return db8500_prcmu_set_arm_opp(armss_opps[i].opp);
+
+	return -EINVAL;
+}
+
+static int clk_prcmu_set_clock_rate(u8 clock, unsigned long rate)
+{
+	if (clock == PRCMU_ARMSS)
+		return clk_prcmu_set_armss_rate(rate);
+
+	return prcmu_set_clock_rate(clock, rate);
+}
+
 static int clk_prcmu_determine_rate(struct clk_hw *hw,
 				    struct clk_rate_request *req)
 {
 	struct clk_prcmu *clk = to_clk_prcmu(hw);
-	req->rate = prcmu_round_clock_rate(clk->cg_sel, req->rate);
+
+	if (clk->cg_sel == PRCMU_ARMSS)
+		req->rate = clk_prcmu_round_armss_rate(req->rate);
+	else
+		req->rate = prcmu_round_clock_rate(clk->cg_sel, req->rate);
 
 	return 0;
 }
@@ -66,7 +121,7 @@ static int clk_prcmu_set_rate(struct clk_hw *hw, unsigned long rate,
 			      unsigned long parent_rate)
 {
 	struct clk_prcmu *clk = to_clk_prcmu(hw);
-	return prcmu_set_clock_rate(clk->cg_sel, rate);
+	return clk_prcmu_set_clock_rate(clk->cg_sel, rate);
 }
 
 static int clk_prcmu_opp_prepare(struct clk_hw *hw)
@@ -217,7 +272,7 @@ static struct clk_hw *clk_reg_prcmu(const char *name,
 	clk->opp_requested = 0;
 	/* "rate" can be used for changing the initial frequency */
 	if (rate)
-		prcmu_set_clock_rate(cg_sel, rate);
+		clk_prcmu_set_clock_rate(cg_sel, rate);
 
 	clk_prcmu_init.name = name;
 	clk_prcmu_init.ops = clk_prcmu_ops;

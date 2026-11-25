@@ -1618,47 +1618,6 @@ static long round_clock_rate(u8 clock, unsigned long rate)
 	return rounded_rate;
 }
 
-static const unsigned long db8500_armss_freqs[] = {
-	199680000,
-	399360000,
-	798720000,
-	998400000
-};
-
-/* The DB8520 has slightly higher ARMSS max frequency */
-static const unsigned long db8520_armss_freqs[] = {
-	199680000,
-	399360000,
-	798720000,
-	1152000000
-};
-
-static long round_armss_rate(unsigned long rate)
-{
-	unsigned long freq = 0;
-	const unsigned long *freqs;
-	int nfreqs;
-	int i;
-
-	if (fw_info.version.project == PRCMU_FW_PROJECT_U8520) {
-		freqs = db8520_armss_freqs;
-		nfreqs = ARRAY_SIZE(db8520_armss_freqs);
-	} else {
-		freqs = db8500_armss_freqs;
-		nfreqs = ARRAY_SIZE(db8500_armss_freqs);
-	}
-
-	/* Find the corresponding arm opp from the cpufreq table. */
-	for (i = 0; i < nfreqs; i++) {
-		freq = freqs[i];
-		if (rate <= freq)
-			break;
-	}
-
-	/* Return the last valid value, even if a match was not found. */
-	return freq;
-}
-
 #define MIN_PLL_VCO_RATE 600000000ULL
 #define MAX_PLL_VCO_RATE 1680640000ULL
 
@@ -1730,8 +1689,6 @@ long prcmu_round_clock_rate(u8 clock, unsigned long rate)
 {
 	if (clock < PRCMU_NUM_REG_CLOCKS)
 		return round_clock_rate(clock, rate);
-	else if (clock == PRCMU_ARMSS)
-		return round_armss_rate(rate);
 	else if (clock == PRCMU_PLLDSI)
 		return round_plldsi_rate(rate);
 	else if ((clock == PRCMU_DSI0CLK) || (clock == PRCMU_DSI1CLK))
@@ -1789,37 +1746,6 @@ static void set_clock_rate(u8 clock, unsigned long rate)
 	writel(0, PRCM_SEM);
 
 	spin_unlock_irqrestore(&clk_mgt_lock, flags);
-}
-
-static int set_armss_rate(unsigned long rate)
-{
-	unsigned long freq;
-	u8 opps[] = { ARM_EXTCLK, ARM_50_OPP, ARM_100_OPP, ARM_MAX_OPP };
-	const unsigned long *freqs;
-	int nfreqs;
-	int i;
-
-	if (fw_info.version.project == PRCMU_FW_PROJECT_U8520) {
-		freqs = db8520_armss_freqs;
-		nfreqs = ARRAY_SIZE(db8520_armss_freqs);
-	} else {
-		freqs = db8500_armss_freqs;
-		nfreqs = ARRAY_SIZE(db8500_armss_freqs);
-	}
-
-	/* Find the corresponding arm opp from the cpufreq table. */
-	for (i = 0; i < nfreqs; i++) {
-		freq = freqs[i];
-		if (rate == freq)
-			break;
-	}
-
-	if (rate != freq)
-		return -EINVAL;
-
-	/* Set the new arm opp. */
-	pr_debug("SET ARM OPP 0x%02x\n", opps[i]);
-	return db8500_prcmu_set_arm_opp(opps[i]);
 }
 
 static int set_plldsi_rate(unsigned long rate)
@@ -1902,8 +1828,6 @@ int prcmu_set_clock_rate(u8 clock, unsigned long rate)
 {
 	if (clock < PRCMU_NUM_REG_CLOCKS)
 		set_clock_rate(clock, rate);
-	else if (clock == PRCMU_ARMSS)
-		return set_armss_rate(rate);
 	else if (clock == PRCMU_PLLDSI)
 		return set_plldsi_rate(rate);
 	else if ((clock == PRCMU_DSI0CLK) || (clock == PRCMU_DSI1CLK))

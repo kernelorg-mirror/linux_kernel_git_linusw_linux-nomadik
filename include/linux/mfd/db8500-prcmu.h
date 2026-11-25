@@ -706,7 +706,6 @@ void prcmu_configure_auto_pm(struct prcmu_auto_pm_config *sleep,
 	struct prcmu_auto_pm_config *idle);
 bool prcmu_is_auto_pm_enabled(void);
 
-int prcmu_config_clkout(u8 clkout, u8 source, u8 div);
 unsigned long prcmu_clock_rate(u8 clock);
 long prcmu_round_clock_rate(u8 clock, unsigned long rate);
 int prcmu_set_clock_rate(u8 clock, unsigned long rate);
@@ -814,11 +813,6 @@ static inline void prcmu_configure_auto_pm(struct prcmu_auto_pm_config *sleep,
 static inline bool prcmu_is_auto_pm_enabled(void)
 {
 	return false;
-}
-
-static inline int prcmu_config_clkout(u8 clkout, u8 source, u8 div)
-{
-	return 0;
 }
 
 static inline unsigned long prcmu_clock_rate(u8 clock)

@@ -6,9 +6,11 @@
  * Author: Ulf Hansson <ulf.hansson@linaro.org>
  */
 
+#include <linux/bits.h>
 #include <linux/clk-provider.h>
 #include <linux/mfd/db8500-prcmu.h>
 #include <linux/slab.h>
+#include <linux/spinlock.h>
 #include <linux/io.h>
 #include <linux/err.h>
 #include "clk.h"
@@ -350,13 +352,92 @@ struct clk_hw *clk_reg_prcmu_opp_volt_scalable(const char *name,
 			&clk_prcmu_opp_volt_scalable_ops);
 }
 
-/* The clkout (external) clock is special and need special ops */
+/* External programmable clock outputs */
+
+#define PRCM_CLKOCR		   0x1CC
+#define PRCM_CLKOCR_CLKODIV0_SHIFT	0
+#define PRCM_CLKOCR_CLKODIV0_MASK	GENMASK(5, 0)
+#define PRCM_CLKOCR_CLKOSEL0_SHIFT	6
+#define PRCM_CLKOCR_CLKOSEL0_MASK	GENMASK(8, 6)
+#define PRCM_CLKOCR_CLKODIV1_SHIFT	16
+#define PRCM_CLKOCR_CLKODIV1_MASK	GENMASK(21, 16)
+#define PRCM_CLKOCR_CLKOSEL1_SHIFT	22
+#define PRCM_CLKOCR_CLKOSEL1_MASK	GENMASK(24, 22)
+#define PRCM_CLKOCR_CLK1TYPE		BIT(28)
+
+static DEFINE_SPINLOCK(clkout_lock);
+
+/**
+ * clk_prcmu_config_clkout - Configure one of the programmable clock outputs.
+ * @clkout:	The CLKOUT number (0 or 1).
+ * @source:	The clock to be used (one of the PRCMU_CLKSRC_*).
+ * @div:	The divider to be applied.
+ *
+ * Configures one of the programmable clock outputs (CLKOUTs).
+ * @div should be in the range [1,63] to request a configuration, or 0 to
+ * inform that the configuration is no longer requested.
+ */
+static int clk_prcmu_config_clkout(u8 clkout, u8 source, u8 div)
+{
+	static int requests[2];
+	int r = 0;
+	unsigned long flags;
+	u32 val;
+	u32 bits;
+	u32 mask;
+	u32 div_mask;
+
+	BUG_ON(clkout > 1);
+	BUG_ON(div > 63);
+	BUG_ON((clkout == 0) && (source > PRCMU_CLKSRC_CLK009));
+
+	if (!div && !requests[clkout])
+		return -EINVAL;
+
+	if (clkout == 0) {
+		div_mask = PRCM_CLKOCR_CLKODIV0_MASK;
+		mask = (PRCM_CLKOCR_CLKODIV0_MASK | PRCM_CLKOCR_CLKOSEL0_MASK);
+		bits = ((source << PRCM_CLKOCR_CLKOSEL0_SHIFT) |
+			(div << PRCM_CLKOCR_CLKODIV0_SHIFT));
+	} else {
+		div_mask = PRCM_CLKOCR_CLKODIV1_MASK;
+		mask = (PRCM_CLKOCR_CLKODIV1_MASK | PRCM_CLKOCR_CLKOSEL1_MASK |
+			PRCM_CLKOCR_CLK1TYPE);
+		bits = ((source << PRCM_CLKOCR_CLKOSEL1_SHIFT) |
+			(div << PRCM_CLKOCR_CLKODIV1_SHIFT));
+	}
+	bits &= mask;
+
+	spin_lock_irqsave(&clkout_lock, flags);
+
+	val = db8500_prcmu_read(PRCM_CLKOCR);
+	if (val & div_mask) {
+		if (div) {
+			if ((val & mask) != bits) {
+				r = -EBUSY;
+				goto unlock_and_return;
+			}
+		} else {
+			if ((val & mask & ~div_mask) != bits) {
+				r = -EINVAL;
+				goto unlock_and_return;
+			}
+		}
+	}
+	db8500_prcmu_write(PRCM_CLKOCR, bits | (val & ~mask));
+	requests[clkout] += (div ? 1 : -1);
+
+unlock_and_return:
+	spin_unlock_irqrestore(&clkout_lock, flags);
+
+	return r;
+}
 
 static int clk_prcmu_clkout_prepare(struct clk_hw *hw)
 {
 	struct clk_prcmu_clkout *clk = to_clk_prcmu_clkout(hw);
 
-	return prcmu_config_clkout(clk->clkout_id, clk->source, clk->divider);
+	return clk_prcmu_config_clkout(clk->clkout_id, clk->source, clk->divider);
 }
 
 static void clk_prcmu_clkout_unprepare(struct clk_hw *hw)
@@ -365,7 +446,7 @@ static void clk_prcmu_clkout_unprepare(struct clk_hw *hw)
 	int ret;
 
 	/* The clkout clock is disabled by dividing by 0 */
-	ret = prcmu_config_clkout(clk->clkout_id, clk->source, 0);
+	ret = clk_prcmu_config_clkout(clk->clkout_id, clk->source, 0);
 	if (ret)
 		pr_err("clk_prcmu: %s failed to disable %s\n", __func__,
 		       clk_hw_get_name(hw));

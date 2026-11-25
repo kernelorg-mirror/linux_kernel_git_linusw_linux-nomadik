@@ -441,7 +441,6 @@ static atomic_t ac_wake_req_state = ATOMIC_INIT(0);
 
 /* Spinlocks */
 static DEFINE_SPINLOCK(prcmu_lock);
-static DEFINE_SPINLOCK(clkout_lock);
 
 /* Global var to runtime determine TCDM base for v2 or v1 */
 static __iomem void *tcdm_base;
@@ -620,72 +619,6 @@ enum romcode_read prcmu_get_rc_p2a(void)
 enum ap_pwrst prcmu_get_xp70_current_state(void)
 {
 	return readb(tcdm_base + PRCM_XP70_CUR_PWR_STATE);
-}
-
-/**
- * prcmu_config_clkout - Configure one of the programmable clock outputs.
- * @clkout:	The CLKOUT number (0 or 1).
- * @source:	The clock to be used (one of the PRCMU_CLKSRC_*).
- * @div:	The divider to be applied.
- *
- * Configures one of the programmable clock outputs (CLKOUTs).
- * @div should be in the range [1,63] to request a configuration, or 0 to
- * inform that the configuration is no longer requested.
- */
-int prcmu_config_clkout(u8 clkout, u8 source, u8 div)
-{
-	static int requests[2];
-	int r = 0;
-	unsigned long flags;
-	u32 val;
-	u32 bits;
-	u32 mask;
-	u32 div_mask;
-
-	BUG_ON(clkout > 1);
-	BUG_ON(div > 63);
-	BUG_ON((clkout == 0) && (source > PRCMU_CLKSRC_CLK009));
-
-	if (!div && !requests[clkout])
-		return -EINVAL;
-
-	if (clkout == 0) {
-		div_mask = PRCM_CLKOCR_CLKODIV0_MASK;
-		mask = (PRCM_CLKOCR_CLKODIV0_MASK | PRCM_CLKOCR_CLKOSEL0_MASK);
-		bits = ((source << PRCM_CLKOCR_CLKOSEL0_SHIFT) |
-			(div << PRCM_CLKOCR_CLKODIV0_SHIFT));
-	} else {
-		div_mask = PRCM_CLKOCR_CLKODIV1_MASK;
-		mask = (PRCM_CLKOCR_CLKODIV1_MASK | PRCM_CLKOCR_CLKOSEL1_MASK |
-			PRCM_CLKOCR_CLK1TYPE);
-		bits = ((source << PRCM_CLKOCR_CLKOSEL1_SHIFT) |
-			(div << PRCM_CLKOCR_CLKODIV1_SHIFT));
-	}
-	bits &= mask;
-
-	spin_lock_irqsave(&clkout_lock, flags);
-
-	val = readl(PRCM_CLKOCR);
-	if (val & div_mask) {
-		if (div) {
-			if ((val & mask) != bits) {
-				r = -EBUSY;
-				goto unlock_and_return;
-			}
-		} else {
-			if ((val & mask & ~div_mask) != bits) {
-				r = -EINVAL;
-				goto unlock_and_return;
-			}
-		}
-	}
-	writel((bits | (val & ~mask)), PRCM_CLKOCR);
-	requests[clkout] += (div ? 1 : -1);
-
-unlock_and_return:
-	spin_unlock_irqrestore(&clkout_lock, flags);
-
-	return r;
 }
 
 int db8500_prcmu_set_power_state(u8 state, bool keep_ulp_clk, bool keep_ap_pll)

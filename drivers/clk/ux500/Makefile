@@ -5,7 +5,7 @@
 
 # Clock types
 obj-y += clk-prcc.o
-obj-y += clk-prcmu.o clk-prcmu-hw.o
+obj-y += clk-prcmu.o clk-prcmu-hw.o clk-prcmu-dsi.o
 obj-y += clk-sysctrl.o
 
 # Reset control

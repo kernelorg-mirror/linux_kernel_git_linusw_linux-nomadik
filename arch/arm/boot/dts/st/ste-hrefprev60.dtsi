@@ -10,7 +10,7 @@
 
 / {
 	gpio_keys {
-		button@1 {
+		button-139 {
 			gpios = <&tc3589x_gpio 7 GPIO_ACTIVE_HIGH>;
 		};
 	};

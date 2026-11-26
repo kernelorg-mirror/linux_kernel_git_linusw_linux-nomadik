@@ -10,13 +10,10 @@
 / {
 	gpio_keys {
 		compatible = "gpio-keys";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		vdd-supply = <&ab8500_ldo_aux1_reg>;
 		pinctrl-names = "default";
 		pinctrl-0 = <&hall_tvk_mode>;
 
-		button@145 {
+		button-145 {
 			/* Hall sensor */
 			gpios = <&gpio4 17 GPIO_ACTIVE_HIGH>;
 			linux,code = <0>; /* SW_LID */

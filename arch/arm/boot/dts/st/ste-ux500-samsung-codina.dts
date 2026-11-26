@@ -79,7 +79,7 @@
 	};
 
 	/* TI TXS0206 level translator for 2.9 V */
-	sd_level_translator: regulator-gpio {
+	sd_level_translator: regulator-sd {
 		compatible = "regulator-fixed";
 
 		/* GPIO87 EN */
@@ -89,7 +89,6 @@
 		regulator-name = "sd-level-translator";
 		regulator-min-microvolt = <2900000>;
 		regulator-max-microvolt = <2900000>;
-		regulator-type = "voltage";
 
 		startup-delay-us = <200>;
 

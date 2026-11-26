@@ -113,6 +113,27 @@
 		};
 	};
 
+	/* ST6G3244ME level translator for 1.8/2.9 V */
+	vmmci: regulator-sd {
+		compatible = "regulator-gpio";
+
+		/* GPIO228 SD_SEL */
+		gpios = <&gpio7 4 GPIO_ACTIVE_HIGH>;
+		/* GPIO217 MMC_EN */
+		enable-gpios = <&gpio6 25 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <2900000>;
+		regulator-name = "mmci-reg";
+		regulator-type = "voltage";
+
+		startup-delay-us = <100>;
+
+		states = <1800000 0x1
+			  2900000 0x0>;
+	};
+
 	soc {
 		/* Name the GPIO muxed rails on the Snowball board */
 		gpio@8012e000 {
@@ -220,27 +241,6 @@
 
 				clocks = <&prcc_pclk 3 0>;
 			};
-		};
-
-		/* ST6G3244ME level translator for 1.8/2.9 V */
-		vmmci: regulator-gpio {
-			compatible = "regulator-gpio";
-
-			/* GPIO228 SD_SEL */
-			gpios = <&gpio7 4 GPIO_ACTIVE_HIGH>;
-			/* GPIO217 MMC_EN */
-			enable-gpios = <&gpio6 25 GPIO_ACTIVE_HIGH>;
-			enable-active-high;
-
-			regulator-min-microvolt = <1800000>;
-			regulator-max-microvolt = <2900000>;
-			regulator-name = "mmci-reg";
-			regulator-type = "voltage";
-
-			startup-delay-us = <100>;
-
-			states = <1800000 0x1
-				  2900000 0x0>;
 		};
 
 		// External Micro SD slot
